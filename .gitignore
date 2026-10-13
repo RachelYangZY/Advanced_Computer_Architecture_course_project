@@ -1,0 +1,41 @@
+# Local VS Code agent customizations
+.github/agents/
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Generated model and benchmark artifacts
+*.tflite
+*.lite
+*.onnx
+*.bin
+*.elf
+*.hex
+*.map
+*.vcd
+*.fst
+
+# Access-restricted source model and sample image
+models/deit_tiny_patch16_224/source_model.safetensors
+models/deit_tiny_patch16_224/sample.png
+models/deit_tiny_patch16_224/reference_output.json
+models/deit_tiny_patch16_224/fx_quantization_probe.json
+
+# Locally staged ImageNet images (manifests may be committed)
+data/imagenet/images/
+
+# Build and simulator output
+build/
+out/
+logs/
+coverage/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
