@@ -1,0 +1,49 @@
+{
+  "input_id": "deit-block0-fc2-tile-v1",
+  "operator": "Block 0 MLP fc2 (768 -> 192), input is GELU output",
+  "model": "models/deit_tiny_patch16_224/deit_tiny_w8a8_pilot.tflite",
+  "weight_tensor_index": 97,
+  "act_tensor_index": 186,
+  "out_tensor_index": 187,
+  "tile": {
+    "rows": 8,
+    "inner": 768,
+    "columns": 8,
+    "macs": 49152
+  },
+  "activation_source": "deterministic rng seed=20260929 in [-8, 8]",
+  "act_scale": 0.03077235259115696,
+  "weight_scales_tile": [
+    0.001334198284894228,
+    0.0016439054161310196,
+    0.0020508463494479656,
+    0.0012312326580286026,
+    0.0014388645067811012,
+    0.0023018347565084696,
+    0.0012792242923751473,
+    0.0012387771857902408
+  ],
+  "out_scale": 0.0329238586127758,
+  "out_zero_point": 26,
+  "requant_shift": 31,
+  "requant_multipliers": [
+    2677936,
+    3299565,
+    4116356,
+    2471269,
+    2888017,
+    4620128,
+    2567595,
+    2486412
+  ],
+  "header": "src/deit_fc2_data.h",
+  "golden_i32_corners": {
+    "first": -660,
+    "last": 3192
+  },
+  "golden_i8_corners": {
+    "first": 25,
+    "last": 30
+  },
+  "notes": "Raw INT32 GEMM + per-channel requant; no activation zero-point correction or bias."
+}

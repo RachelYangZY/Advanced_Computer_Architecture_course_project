@@ -1,0 +1,64 @@
+{
+  "input_id": "deit-block0-mlp-chain-token0-v1",
+  "description": "Block 0 MLP, full width (192->768->192), one token (CLS) of sample.png",
+  "model": "models/deit_tiny_patch16_224/deit_tiny_w8a8_pilot.tflite",
+  "input_image": "models/deit_tiny_patch16_224/sample.png",
+  "tensors": {
+    "fc1_in": 184,
+    "fc1_out": 185,
+    "gelu_out": 186,
+    "fc2_out": 187,
+    "fc1_weight": 69,
+    "fc2_weight": 97
+  },
+  "quant": {
+    "fc1_in": {
+      "scale": 0.07223092019557953,
+      "zp": -38
+    },
+    "fc1_out": {
+      "scale": 0.0638277605175972,
+      "zp": 7
+    },
+    "gelu_out": {
+      "scale": 0.03077235259115696,
+      "zp": -122
+    },
+    "fc2_out": {
+      "scale": 0.0329238586127758,
+      "zp": 26
+    },
+    "shift1": 31,
+    "shift2": 31
+  },
+  "macs_per_token": 294912,
+  "gelu_lut_overrides_from_tflite": 0,
+  "accuracy_vs_tflite": {
+    "fc1_out_vs_tflite_all_tokens": {
+      "exact_match_fraction": 0.9981955901015228,
+      "max_abs_diff": 1,
+      "mean_abs_diff": 0.0018044098984771573
+    },
+    "gelu_out_vs_tflite_all_tokens": {
+      "exact_match_fraction": 0.9990878807106599,
+      "max_abs_diff": 3,
+      "mean_abs_diff": 0.00125581641285956
+    },
+    "fc2_out_vs_tflite_all_tokens (fed by TFLite-matching chain)": {
+      "exact_match_fraction": 0.9762320219966159,
+      "max_abs_diff": 1,
+      "mean_abs_diff": 0.023767978003384094
+    },
+    "fc2_out_vs_tflite_given_tflite_gelu_input": {
+      "exact_match_fraction": 0.9990746615905245,
+      "max_abs_diff": 1,
+      "mean_abs_diff": 0.0009253384094754653
+    }
+  },
+  "token0_golden_corners": {
+    "g_first": -127,
+    "y_first": 23,
+    "y_last": 14
+  },
+  "calibration_note": "Pilot model was calibrated on one image; this validates integer parity with TFLite, not task accuracy."
+}

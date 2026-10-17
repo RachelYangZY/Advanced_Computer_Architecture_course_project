@@ -1,0 +1,49 @@
+{
+  "input_id": "deit-block0-qkv-tile-v1",
+  "operator": "Block 0 attention QKV projection (192 -> 576)",
+  "model": "models/deit_tiny_patch16_224/deit_tiny_w8a8_pilot.tflite",
+  "weight_tensor_index": 72,
+  "act_tensor_index": 148,
+  "out_tensor_index": 149,
+  "tile": {
+    "rows": 8,
+    "inner": 192,
+    "columns": 8,
+    "macs": 12288
+  },
+  "activation_source": "deterministic rng seed=20260929 in [-8, 8]",
+  "act_scale": 0.062011126428842545,
+  "weight_scales_tile": [
+    0.0006543629569932818,
+    0.0007432702695950866,
+    0.000985042192041874,
+    0.00037308369064703584,
+    0.0009466292685829103,
+    0.0005375080509111285,
+    0.0014933391939848661,
+    0.0004696978721767664
+  ],
+  "out_scale": 0.05762322247028351,
+  "out_zero_point": -9,
+  "requant_shift": 31,
+  "requant_multipliers": [
+    1512240,
+    1717705,
+    2276443,
+    862200,
+    2187670,
+    1242187,
+    3451123,
+    1085477
+  ],
+  "header": "src/deit_qkv_data.h",
+  "golden_i32_corners": {
+    "first": 1436,
+    "last": -4247
+  },
+  "golden_i8_corners": {
+    "first": -8,
+    "last": -11
+  },
+  "notes": "Raw INT32 GEMM + per-channel requant; no activation zero-point correction or bias."
+}

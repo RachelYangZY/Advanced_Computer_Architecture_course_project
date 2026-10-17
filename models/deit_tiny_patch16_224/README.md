@@ -77,6 +77,19 @@ and zero-point review, integer/reference parity for two major operators and a
 complete block, and target implementations for normalization, GELU, and
 softmax. Full DeiT inference remains unapproved until those gates pass.
 
+## Bare-Metal Operator Tile Status
+
+A first bare-metal GEMM tile has been extracted from the W8A8 pilot:
+
+- Input ID: `deit-block0-mlp-fc1-tile-v1`
+- Metadata: `deit_fc1_tile_meta.json`
+- Generated headers: `src/deit_fc1_tile_data.h`, `src/deit_fc1_tile_packed.h`
+- B0/B1/X1 Spike results: recorded in `EXPERIMENTS.md`
+
+This closes the “one major operator tile on target” gate for ISA comparison.
+It does not close accuracy qualification, requantization, a second operator, or
+a complete Transformer block.
+
 ## Host Reference Setup Status
 
 The Ubuntu WSL project venv runs Python 3.12.3 with Torch 2.11.0+cpu,

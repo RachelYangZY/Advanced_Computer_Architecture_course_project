@@ -1,0 +1,49 @@
+{
+  "input_id": "deit-block0-fc1-tile-v1",
+  "operator": "Block 0 MLP fc1 (192 -> 768)",
+  "model": "models/deit_tiny_patch16_224/deit_tiny_w8a8_pilot.tflite",
+  "weight_tensor_index": 69,
+  "act_tensor_index": 184,
+  "out_tensor_index": 185,
+  "tile": {
+    "rows": 8,
+    "inner": 192,
+    "columns": 8,
+    "macs": 12288
+  },
+  "activation_source": "deterministic rng seed=20260929 in [-8, 8]",
+  "act_scale": 0.07223092019557953,
+  "weight_scales_tile": [
+    0.0028204708360135555,
+    0.0018785680877044797,
+    0.0015308881411328912,
+    0.002966761589050293,
+    0.00196918030269444,
+    0.002250960096716881,
+    0.0032544336281716824,
+    0.001981904497370124
+  ],
+  "out_scale": 0.0638277605175972,
+  "out_zero_point": 7,
+  "requant_shift": 31,
+  "requant_multipliers": [
+    6854330,
+    4565311,
+    3720376,
+    7209847,
+    4785517,
+    5470301,
+    7908950,
+    4816440
+  ],
+  "header": "src/deit_fc1_data.h",
+  "golden_i32_corners": {
+    "first": 4125,
+    "last": -1898
+  },
+  "golden_i8_corners": {
+    "first": 20,
+    "last": 3
+  },
+  "notes": "Raw INT32 GEMM + per-channel requant; no activation zero-point correction or bias."
+}

@@ -1,0 +1,46 @@
+{
+  "input_id": "deit-block0-mlp-fc1-tile-requant-v1",
+  "act_tensor_index": 184,
+  "act_scale": 0.07223092019557953,
+  "weight_tensor_index": 69,
+  "weight_scales_tile": [
+    0.0028204708360135555,
+    0.0018785680877044797,
+    0.0015308881411328912,
+    0.002966761589050293,
+    0.00196918030269444,
+    0.002250960096716881,
+    0.0032544336281716824,
+    0.001981904497370124
+  ],
+  "out_tensor_index": 185,
+  "out_scale": 0.0638277605175972,
+  "out_zero_point": 7,
+  "real_scales": [
+    0.003191796206196016,
+    0.0021258884931037968,
+    0.0017324352014519285,
+    0.003357346675494318,
+    0.002228430139820041,
+    0.002547307281203537,
+    0.003682891797738549,
+    0.002242829521573674
+  ],
+  "multipliers": [
+    6854330,
+    4565311,
+    3720376,
+    7209847,
+    4785517,
+    5470301,
+    7908950,
+    4816440
+  ],
+  "shift": 31,
+  "notes": "Applies model-derived per-channel effective scales to the existing raw INT32 GEMM tile. Does not subtract activation zero-points or add bias; intended for scalar requant ISA comparison on this tile.",
+  "golden_i8_corners": {
+    "output[0]": 20,
+    "output[1]": 13,
+    "output[last]": 3
+  }
+}
