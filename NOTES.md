@@ -9,9 +9,9 @@
 - Spike: `Spike RISC-V ISA Simulator 1.1.1-dev` at
   `/home/rachelyzy/riscv/bin/spike`.
 - Spike default ISA from `spike --help`: `rv64imafdc_zicntr_zihpm`.
-- Existing project bare-metal startup: `src/start.S` initializes `sp` and calls
+- Existing project bare-metal startup: `src/startup/start.S` initializes `sp` and calls
   `main`.
-- Existing linker script: `scripts/b0.ld`, entry `_start`, load base
+- Existing linker script: `src/startup/b0.ld`, entry `_start`, load base
   `0x80000000`, 4 KiB stack allocation, `.tohost` section.
 - Existing completion convention: write `1` for pass or `3` for failure to
   `tohost`, then remain in a loop.
@@ -63,12 +63,12 @@
 ## 2026-10-14: Host venv and first DeiT GEMM tile
 
 - Native Python packages must not be installed under the OneDrive/WSL mount;
-  use `/home/rachelyzy/aca-venv` (`scripts/setup_host_venv.sh`).
+  use `/home/rachelyzy/aca-venv` (`scripts/setup/setup_host_venv.sh`).
 - Extract/build/run path for the first model-shaped tile:
-  `scripts/extract_deit_gemm_tile.py`
+  `tools/extract/extract_deit_gemm_tile.py`
   `scripts/build_{b0,b1,x1}_deit_fc1.sh`
-  `scripts/run_deit_fc1_configs.sh`
-  `scripts/summarize_deit_fc1_metrics.py`
+  `scripts/run/run_deit_fc1_configs.sh`
+  `tools/analysis/summarize_deit_fc1_metrics.py`
 - Spike X1 command requires `LD_LIBRARY_PATH=$HOME/riscv:$HOME/riscv/lib` and
   `--extension=xqmac8`.
 - Compatibility note: the original synthetic B0/B1/X1 GEMM path remains valid.

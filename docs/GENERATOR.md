@@ -1,7 +1,7 @@
 # TFLite → Bare-Metal C Generator
 
 Status: **phase 1 complete** (skeleton + first ops, bit-exact on Block 0 MLP + residual).
-Model facts live in `docs/MODEL_SUMMARY.md` (regenerate: `python scripts/summarize_model.py`).
+Model facts live in `docs/MODEL_SUMMARY.md` (regenerate: `python tools/tflite2c/summarize_model.py`).
 
 ## Pipeline
 
@@ -11,18 +11,18 @@ Model facts live in `docs/MODEL_SUMMARY.md` (regenerate: `python scripts/summari
 
 | Stage | File | What it does |
 |---|---|---|
-| Parse | `scripts/tflite_ir.py` | Flatbuffer → tensors (shape, quant params, const data incl. external buffers) and ops (kind, options). No TFLite runtime. |
-| Lower | `scripts/gen_model.py` | Precomputes Q31 multipliers/shifts, GELU LUT, broadcast/transpose strides. |
-| Plan | `scripts/gen_model.py` | Tensor lifetimes → greedy-by-size arena offsets; RESHAPE aliases its input (no copy). |
-| Emit | `scripts/gen_model.py` | `weights.c/h` (const data), `model.c` (straight-line `model_run()`), `harness.c` (host test). |
+| Parse | `tools/tflite2c/tflite_ir.py` | Flatbuffer → tensors (shape, quant params, const data incl. external buffers) and ops (kind, options). No TFLite runtime. |
+| Lower | `tools/tflite2c/gen_model.py` | Precomputes Q31 multipliers/shifts, GELU LUT, broadcast/transpose strides. |
+| Plan | `tools/tflite2c/gen_model.py` | Tensor lifetimes → greedy-by-size arena offsets; RESHAPE aliases its input (no copy). |
+| Emit | `tools/tflite2c/gen_model.py` | `weights.c/h` (const data), `model.c` (straight-line `model_run()`), `harness.c` (host test). |
 | Kernels | `src/gen/ops_ref.{c,h}`, `src/gen/tflite_math.h` | Scalar reference kernels reproducing TFLite arithmetic. |
 
 ## Usage
 
 ```bash
 # in WSL; needs ~/aca-venv (numpy, ai-edge-litert, tflite, pillow)
-bash scripts/gen_check.sh 56:60        # op range [start,end): generate, build, compare to TFLite
-python scripts/gen_model.py --ops 0:648 --out build/gen    # whole model (fails on unsupported ops)
+bash scripts/run/gen_check.sh 56:60        # op range [start,end): generate, build, compare to TFLite
+python tools/tflite2c/gen_model.py --ops 0:648 --out build/gen    # whole model (fails on unsupported ops)
 ```
 
 `gen_check.sh` dumps every TFLite tensor for `sample.png` (`build/ref/t<idx>.bin`), then builds

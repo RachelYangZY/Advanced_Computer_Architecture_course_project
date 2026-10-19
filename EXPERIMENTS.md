@@ -84,7 +84,7 @@ operators, with identical inputs across B0, B1, and X1.
 
 The first meaningful baseline uses an 8 x 16 activation matrix multiplied by a
 16 x 8 weight matrix. The input values are deterministic static INT8 arrays in
-`src/b0_main.c`; the output is accumulated in INT32. This workload performs
+`src/workloads/b0_main.c`; the output is accumulated in INT32. This workload performs
 1,024 MAC operations and is intended for comparing B0 against B1 and X1.
 
 Command:
@@ -118,7 +118,7 @@ including negative values, `127`, `-128`, and a nonzero accumulator. The test
 command is:
 
 ```text
-gcc -std=c11 -Wall -Wextra -Werror -Isrc src/xqmac8.c tests/test_xqmac8.c -o /tmp/test_xqmac8
+gcc -std=c11 -Wall -Wextra -Werror -Isrc src/kernels/xqmac8.c tests/test_xqmac8.c -o /tmp/test_xqmac8
 /tmp/test_xqmac8
 ```
 
@@ -135,7 +135,7 @@ Spike instruction, assembler encoding, CV-Wally RTL, or performance.
 
 B1 uses the identical source workload and input data as B0. The only intended
 change is compiler optimization: `-O2` instead of `-O0`. The binary is built by
-`scripts/build_b1.sh` and stored under `build/B1/`.
+`scripts/build/build_b1.sh` and stored under `build/B1/`.
 
 Observed result:
 
@@ -160,15 +160,15 @@ documented cycle model is required for cycle speedup.
 
 ## Isolated GEMM Kernel Profile
 
-The reusable analyzer `scripts/analyze_kernel_trace.sh` filters each Spike trace
+The reusable analyzer `scripts/run/analyze_kernel_trace.sh` filters each Spike trace
 to the address range of `int8_gemm_reference`. This separates the targeted
 kernel from startup, output checking, and the `tohost` completion sequence.
 
 Commands:
 
 ```text
-bash scripts/analyze_kernel_trace.sh build/B0/trace.log 800000ae 800001d4 1024
-bash scripts/analyze_kernel_trace.sh build/B1/trace.log 8000006e 80000102 1024
+bash scripts/run/analyze_kernel_trace.sh build/B0/trace.log 800000ae 800001d4 1024
+bash scripts/run/analyze_kernel_trace.sh build/B1/trace.log 8000006e 80000102 1024
 ```
 
 Observed kernel-only result:
@@ -224,9 +224,9 @@ Weights: first 8 output channels of Block 0 `mlp.fc1` (TFLite `[768,192]`,
 transposed to `[K,N]` for `int8_gemm_reference`)  
 Activations: deterministic INT8 values (`numpy` RNG seed `20260929`, range
 `[-8, 8]`) so the tile is reproducible without intermediate-tensor capture  
-Generation: `scripts/extract_deit_gemm_tile.py`  
+Generation: `tools/extract/extract_deit_gemm_tile.py`  
 Builds: `scripts/build_{b0,b1,x1}_deit_fc1.sh`  
-Runner: `scripts/run_deit_fc1_configs.sh`
+Runner: `scripts/run/run_deit_fc1_configs.sh`
 
 Spike invocation:
 
@@ -239,11 +239,11 @@ LD_LIBRARY_PATH=$HOME/riscv:$HOME/riscv/lib \
 
 Correctness: all three configurations exit Spike with code 0 (`tohost` pass)
 against the host-generated INT32 golden array embedded in
-`src/deit_fc1_tile_data.h`.
+`src/workloads/deit_fc1_tile_data.h`.
 
 ### Full-program counts (bounded before spin)
 
-Produced by `scripts/summarize_deit_fc1_metrics.py`:
+Produced by `tools/analysis/summarize_deit_fc1_metrics.py`:
 
 | config | retired | macs | mulw | xqmac8 | loads | stores | control_flow | macs_per_instr | loads_per_mac |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -271,9 +271,9 @@ rodata for these freestanding links):
 Commands:
 
 ```text
-bash scripts/analyze_kernel_trace.sh build/B0_deit_fc1/trace.log 800000aa 800001d0 12288
-bash scripts/analyze_kernel_trace.sh build/B1_deit_fc1/trace.log 80000070 80000104 12288
-bash scripts/analyze_kernel_trace.sh build/X1_deit_fc1/trace.log 80000070 80000128 12288
+bash scripts/run/analyze_kernel_trace.sh build/B0_deit_fc1/trace.log 800000aa 800001d0 12288
+bash scripts/run/analyze_kernel_trace.sh build/B1_deit_fc1/trace.log 80000070 80000104 12288
+bash scripts/run/analyze_kernel_trace.sh build/X1_deit_fc1/trace.log 80000070 80000128 12288
 ```
 
 | Metric | B0 | B1 | X1 |
@@ -301,14 +301,14 @@ claiming accuracy-qualified full-model results.
 ## DeiT fc1 Tile + Scalar Requantization
 
 After the INT32 GEMM tile, each of the 64 outputs is requantized to INT8 with
-the software kernel in `src/requantize.c`:
+the software kernel in `src/kernels/requantize.c`:
 
 ```text
 tmp = (acc * multiplier[channel] + (1 << (shift-1))) >> shift
 out = sat_int8(tmp + zero_point)
 ```
 
-Parameters are derived from the W8A8 pilot (`scripts/generate_fc1_requant_params.py`,
+Parameters are derived from the W8A8 pilot (`tools/extract/generate_fc1_requant_params.py`,
 metadata `deit_fc1_requant_meta.json`):
 
 - activation scale from tensor 184
@@ -337,8 +337,8 @@ so requantization is a visible remaining software bottleneck.
 ## X1 with Xrequant Custom Instruction
 
 X1 now pairs Xqmac8 GEMM with the custom `xrequant` instruction (scalar
-requant remains on B0/B1). Rebuild Spike via `scripts/install_xqmac8_spike.sh`
-and run `scripts/run_xrequant_fc1.sh`.
+requant remains on B0/B1). Rebuild Spike via `scripts/setup/install_xqmac8_spike.sh`
+and run `scripts/run/run_xrequant_fc1.sh`.
 
 Correctness: Spike exit 0 for B1 (scalar) and X1 (`xrequant`), matching the
 same INT8 golden array. Trace shows exactly **64** `xrequant` and **1536**
@@ -360,8 +360,8 @@ output element.
 ## Operator Coverage: fc1, QKV, fc2 (Generic Pipeline)
 
 Three Block 0 operators run through one generic path
-(`scripts/run_deit_op.sh <fc1|qkv|fc2>`): `extract_deit_op.py` generates
-`src/deit_<op>_data.h`, `build_deit_op.sh` builds B0 (`-O0`, scalar GEMM +
+(`scripts/run/run_deit_op.sh <fc1|qkv|fc2>`): `extract_deit_op.py` generates
+`src/workloads/deit_<op>_data.h`, `build_deit_op.sh` builds B0 (`-O0`, scalar GEMM +
 scalar requant), B1 (`-O2`, same sources) and X1 (`-O2`, Xqmac8 GEMM +
 `xrequant`), and `spike_metrics.py` produces the tables in
 `results/deit_<op>_metrics.md`. All configs of all three operators exit 0
@@ -428,7 +428,7 @@ x[192] -> fc1 (192->768) -> +bias -> requant -> GELU (256-entry LUT)
 
 Input id `deit-block0-mlp-chain-token0-v1`; metadata and accuracy numbers in
 `models/deit_tiny_patch16_224/deit_mlp_chain_meta.json`; metrics in
-`results/deit_mlp_metrics.md`. Run: `bash scripts/run_deit_op.sh mlp`.
+`results/deit_mlp_metrics.md`. Run: `bash scripts/run/run_deit_op.sh mlp`.
 
 How it is built:
 

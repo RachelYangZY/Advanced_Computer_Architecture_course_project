@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+"""Extract a DeiT W8A8 GEMM tile into static C arrays for bare-metal B0/B1/X1.
+
+Selects Block 0 MLP fc1 weights from the W8A8 pilot, takes an MxKxN tile, and
+emits:
+  - host-verified INT32 golden outputs
+  - scalar INT8 activation/weight arrays for B0/B1
+  - uint64 packed arrays for X1 (K must be a multiple of 8)
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+import numpy as np
+from ai_edge_litert import interpreter as tfl
+
+
+def pack_rows_u64(matrix: np.ndarray) -> np.ndarray:
+    """Pack each row's K INT8 values into K/8 little-endian uint64 words."""
+    rows, inner = matrix.shape
+    if inner % 8 != 0:
+        raise ValueError(f"inner dimension {inner} is not a multiple of 8")
+    words = inner // 8
+    packed = np.zeros((rows, words), dtype=np.uint64)
+    flat = matrix.astype(np.int8).reshape(rows, words, 8)
+    for lane in range(8):
+        packed |= (flat[:, :, lane].astype(np.uint64) & np.uint64(0xFF)) << np.uint64(
+            8 * lane
+        )
+    return packed
+
+
+def pack_columns_u64(matrix: np.ndarray) -> np.ndarray:
+    """Pack each column's K INT8 values into K/8 little-endian uint64 words.
+
+    Input layout is [K, N] (matches int8_gemm_reference weight indexing).
+    Output layout is [N, K/8] so column c occupies packed_weights[c * words + w].
+    """
+    inner, columns = matrix.shape
+    if inner % 8 != 0:
+        raise ValueError(f"inner dimension {inner} is not a multiple of 8")
+    words = inner // 8
+    packed = np.zeros((columns, words), dtype=np.uint64)
+    for column in range(columns):
+        values = matrix[:, column].astype(np.int8).reshape(words, 8)
+        for lane in range(8):
+            packed[column, :] |= (values[:, lane].astype(np.uint64) & np.uint64(0xFF)) << (
+                8 * lane
+            )
+    return packed
+
+
+def c_array(name: str, ctype: str, values: np.ndarray, cols_per_line: int = 12) -> str:
+    flat = values.reshape(-1)
+    lines = [f"static const {ctype} {name}[] = {{"]
+    for start in range(0, flat.size, cols_per_line):
+        chunk = flat[start : start + cols_per_line]
+        if ctype == "uint64_t":
+            body = ", ".join(f"UINT64_C({int(v)})" for v in chunk)
+        else:
+            body = ", ".join(str(int(v)) for v in chunk)
+        lines.append(f"    {body},")
+    lines.append("};")
+    return "\n".join(lines)
+
+
+def find_weight(details: list[dict], needle: str, shape: tuple[int, int]) -> dict:
+    for tensor in details:
+        name = tensor.get("name", "")
+        tens_shape = tuple(int(x) for x in tensor.get("shape", []))
+        if needle in name and tens_shape == shape and tensor.get("dtype") == np.int8:
+            return tensor
+    raise RuntimeError(f"Could not find INT8 weight tensor {needle} with shape {shape}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--model",
+        type=Path,
+        default=Path("models/deit_tiny_patch16_224/deit_tiny_w8a8_pilot.tflite"),
+    )
+    parser.add_argument("--rows", type=int, default=8)
+    parser.add_argument("--inner", type=int, default=192)
+    parser.add_argument("--columns", type=int, default=8)
+    parser.add_argument(
+        "--output-header",
+        type=Path,
+        default=Path("src/workloads/deit_fc1_tile_data.h"),
+    )
+    parser.add_argument(
+        "--output-packed-header",
+        type=Path,
+        default=Path("src/workloads/deit_fc1_tile_packed.h"),
+    )
+    parser.add_argument(
+        "--output-meta",
+        type=Path,
+        default=Path("models/deit_tiny_patch16_224/deit_fc1_tile_meta.json"),
+    )
+    args = parser.parse_args()
+
+    if args.inner % 8 != 0:
+        raise SystemExit("inner must be a multiple of 8 for Xqmac8 packing")
+
+    interp = tfl.Interpreter(str(args.model))
+    interp.allocate_tensors()
+    details = interp.get_tensor_details()
+
+    weight_info = find_weight(
+        details,
+        "Block_0/timm.layers.mlp.Mlp_mlp/torch.nn.modules.linear.Linear_fc1",
+        (768, 192),
+    )
+    weights_nk = interp.get_tensor(weight_info["index"]).astype(np.int8)
+    # TFLite FC weight is [N, K]; bare-metal GEMM expects [K, N].
+    weights_kn = weights_nk[: args.columns, : args.inner].T.copy()
+
+    # Deterministic activations derived from the real weight tile so the
+    # workload is model-shaped but fully reproducible without runtime capture.
+    rng = np.random.default_rng(20260929)
+    activations = rng.integers(-8, 9, size=(args.rows, args.inner), dtype=np.int8)
+
+    golden = activations.astype(np.int32) @ weights_kn.astype(np.int32)
+    packed_a = pack_rows_u64(activations)
+    packed_b = pack_columns_u64(weights_kn)
+
+    quant = weight_info.get("quantization_parameters", {})
+    scale = float(quant.get("scales", [0.0])[0]) if len(quant.get("scales", [])) else None
+    zero_point = (
+        int(quant.get("zero_points", [0])[0]) if len(quant.get("zero_points", [])) else 0
+    )
+
+    header = f"""/* Auto-generated by tools/extract/extract_deit_gemm_tile.py. Do not edit. */
+#ifndef DEIT_FC1_TILE_DATA_H
+#define DEIT_FC1_TILE_DATA_H
+
+#include <stdint.h>
+
+#define DEIT_FC1_TILE_ROWS {args.rows}
+#define DEIT_FC1_TILE_INNER {args.inner}
+#define DEIT_FC1_TILE_COLUMNS {args.columns}
+#define DEIT_FC1_TILE_MACS ({args.rows} * {args.inner} * {args.columns})
+#define DEIT_FC1_TILE_PACKED_WORDS ({args.inner} / 8)
+
+{c_array("deit_fc1_activations", "int8_t", activations)}
+
+{c_array("deit_fc1_weights", "int8_t", weights_kn)}
+
+{c_array("deit_fc1_golden", "int32_t", golden)}
+
+#endif
+"""
+    packed_header = f"""/* Auto-generated by tools/extract/extract_deit_gemm_tile.py. Do not edit. */
+#ifndef DEIT_FC1_TILE_PACKED_H
+#define DEIT_FC1_TILE_PACKED_H
+
+#include <stdint.h>
+#include "deit_fc1_tile_data.h"
+
+{c_array("deit_fc1_packed_activations", "uint64_t", packed_a)}
+
+{c_array("deit_fc1_packed_weights", "uint64_t", packed_b)}
+
+#endif
+"""
+    args.output_header.parent.mkdir(parents=True, exist_ok=True)
+    args.output_header.write_text(header.replace("\r\n", "\n"), encoding="utf-8")
+    args.output_packed_header.write_text(
+        packed_header.replace("\r\n", "\n"), encoding="utf-8"
+    )
+
+    meta = {
+        "input_id": "deit-block0-mlp-fc1-tile-v1",
+        "model": str(args.model).replace("\\", "/"),
+        "weight_tensor": weight_info.get("name", ""),
+        "weight_index": int(weight_info["index"]),
+        "weight_scale": scale,
+        "weight_zero_point": zero_point,
+        "tile": {
+            "rows": args.rows,
+            "inner": args.inner,
+            "columns": args.columns,
+            "macs": args.rows * args.inner * args.columns,
+        },
+        "activation_source": "deterministic rng seed=20260929 in [-8, 8]",
+        "header": str(args.output_header).replace("\\", "/"),
+        "packed_header": str(args.output_packed_header).replace("\\", "/"),
+        "golden_corners": {
+            "output[0]": int(golden[0, 0]),
+            "output[1]": int(golden[0, 1]),
+            "output[columns-1]": int(golden[0, -1]),
+            "output[last]": int(golden[-1, -1]),
+        },
+    }
+    args.output_meta.parent.mkdir(parents=True, exist_ok=True)
+    args.output_meta.write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(meta, indent=2))
+
+
+if __name__ == "__main__":
+    main()

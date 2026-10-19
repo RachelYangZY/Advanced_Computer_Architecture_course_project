@@ -36,7 +36,7 @@
     2567595,
     2486412
   ],
-  "header": "src/deit_fc2_data.h",
+  "header": "src/workloads/deit_fc2_data.h",
   "golden_i32_corners": {
     "first": -660,
     "last": 3192

@@ -36,7 +36,7 @@
     3451123,
     1085477
   ],
-  "header": "src/deit_qkv_data.h",
+  "header": "src/workloads/deit_qkv_data.h",
   "golden_i32_corners": {
     "first": 1436,
     "last": -4247

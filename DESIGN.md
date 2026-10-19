@@ -88,15 +88,15 @@ does not saturate and does not use floating point; signed INT64 wraparound is
 the architectural overflow behavior to be confirmed against the chosen RTL
 implementation.
 
-The software oracle is `src/xqmac8.c`, tested by `tests/test_xqmac8.c`. The
+The software oracle is `src/kernels/xqmac8.c`, tested by `tests/test_xqmac8.c`. The
 custom opcode encoding and Spike decoder integration are implemented in
-`src/xqmac8_encoding.h` and `src/xqmac8_spike.cc`. The X1 GEMM kernel
+`src/kernels/xqmac8_encoding.h` and `src/spike_ext/xqmac8_spike.cc`. The X1 GEMM kernel
 (`int8_gemm_x1`) accepts a general `inner` dimension that is a multiple of 8
 and issues `inner/8` Xqmac8 operations per output element.
 
 ## Scalar Requantization Semantics
 
-Software requantization (pre-ISA) is implemented in `src/requantize.c`:
+Software requantization (pre-ISA) is implemented in `src/kernels/requantize.c`:
 
 ```text
 tmp = (acc * multiplier + (1 << (shift - 1))) >> shift
@@ -111,12 +111,12 @@ out = sat_int8(tmp + zero_point)
 - no floating-point operations
 
 The DeiT fc1 tile uses per-channel multipliers with a shared shift, generated
-from pilot scales by `scripts/generate_fc1_requant_params.py`. B0/B1 keep this
+from pilot scales by `tools/extract/generate_fc1_requant_params.py`. B0/B1 keep this
 scalar path. X1 replaces it with the custom `xrequant` instruction below.
 
 ## Chained MLP Workload Design
 
-The Block 0 MLP chain (`src/deit_mlp_b0_main.c`, `src/deit_mlp_x1_main.c`)
+The Block 0 MLP chain (`src/workloads/deit_mlp_b0_main.c`, `src/workloads/deit_mlp_x1_main.c`)
 is the first workload where operator outputs feed operator inputs:
 
 ```text
@@ -139,10 +139,10 @@ Design decisions:
   in an 8-byte-aligned `uint64_t` buffer, so its lanes already form Xqmac8
   operands; TFLite's `[N, K]` weight layout is already per-channel packed.
 - **Per-stage functions are `noinline`** so Spike traces can be attributed to
-  GEMM, fc1 requant, GELU and fc2 requant (`scripts/spike_metrics.py`).
+  GEMM, fc1 requant, GELU and fc2 requant (`tools/analysis/spike_metrics.py`).
 
 Tensor indices used by the extractors were checked against the model's op graph
-(`scripts/probe_mlp_ops.py`): fc1 184 -> 185, GELU 185 -> 186, fc2 186 -> 187
+(`tools/model/probe_mlp_ops.py`): fc1 184 -> 185, GELU 185 -> 186, fc2 186 -> 187
 (not 188, which is the residual ADD output).
 
 ## Xrequant Semantics
@@ -164,6 +164,6 @@ Encoding (custom-0 family, distinct from Xqmac8 by `funct3`):
 - opcode = `0x0b`, funct3 = `0x1`, funct7 = `0x2b`
 - `xrequant a0, a1, a2` encodes as `0x56c5950b`
 
-Software helpers: `src/xrequant_encoding.h`, `src/xrequant.h`.  
-Spike decode/execute lives beside Xqmac8 in `src/xqmac8_spike.cc` and is loaded
+Software helpers: `src/kernels/xrequant_encoding.h`, `src/kernels/xrequant.h`.  
+Spike decode/execute lives beside Xqmac8 in `src/spike_ext/xqmac8_spike.cc` and is loaded
 with `--extension=xqmac8`.
