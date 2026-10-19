@@ -17,8 +17,12 @@ MODEL = Path("models/deit_tiny_patch16_224/deit_tiny_w8a8_pilot.tflite")
 SAMPLE = Path("models/deit_tiny_patch16_224/sample.png")
 
 
-def preprocess(input_detail: dict) -> np.ndarray:
+def preprocess(input_detail: dict, variant: str = "") -> np.ndarray:
     image = Image.open(SAMPLE).convert("RGB").resize((224, 224), Image.BICUBIC)
+    if variant == "flip":      # extra test input: horizontally mirrored sample
+        image = image.transpose(Image.FLIP_LEFT_RIGHT)
+    elif variant == "invert":  # extra test input: inverted colours
+        image = Image.eval(image, lambda v: 255 - v)
     arr = np.asarray(image, dtype=np.float32) / 255.0
     mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
     std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
@@ -38,7 +42,8 @@ def main() -> None:
     )
     interp.allocate_tensors()
     inp = interp.get_input_details()[0]
-    interp.set_tensor(inp["index"], preprocess(inp))
+    variant = sys.argv[2] if len(sys.argv) > 2 else ""
+    interp.set_tensor(inp["index"], preprocess(inp, variant))
     interp.invoke()
 
     n = 0

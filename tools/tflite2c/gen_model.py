@@ -31,6 +31,7 @@ DEFAULT_MODEL = "models/deit_tiny_patch16_224/deit_tiny_w8a8_pilot.tflite"
 GENERATOR_VERSION = "0.1"
 ALIGN = 8
 EW_MAX_RANK = 5
+RSQRT_REL_BIAS = 1e-5
 
 
 # ----------------------------------------------------------------------------
@@ -284,25 +285,84 @@ class Generator:
             f"    op_fc_i8(&p_{op.idx}, {self.ptr(x)}, {self.ptr(out)});  /* op {op.idx} FC {rows}x{k}x{n} */"
         )
 
-    def lower_gelu(self, op) -> None:
+    def _lut_op(self, op, func, tag: str) -> None:
+        """INT8->INT8 lookup table op, built like TFLite's PopulateLookupTable (float32)."""
         x, out = op.inputs[0], op.outputs[0]
         self.check_i8(x, out)
-        if op.options.get("approximate"):
-            raise NotImplementedError("approximate GELU")
         s_in, zp_in = scale_zp(self.T[x])
         s_out, zp_out = scale_zp(self.T[out])
         vals = np.arange(-128, 128, dtype=np.int32)
         f32 = np.float32
         deq = f32(s_in) * (vals - zp_in).astype(f32)
-        erf = np.array([math.erf(float(v) * math.sqrt(0.5)) for v in deq], dtype=np.float64).astype(f32)
-        gelu = f32(0.5) * deq * (f32(1.0) + erf)
-        resc = round_half_away(gelu * (f32(1.0) / f32(s_out)))
-        lut = np.clip(resc.astype(np.int64) + zp_out, -128, 127).astype(np.int8)
+        with np.errstate(all="ignore"):
+            transformed = func(deq).astype(f32)
+        resc = round_half_away(transformed * (f32(1.0) / f32(s_out)))
+        # Non-finite results convert to INT_MIN on x86 and then saturate to -128.
+        resc = np.where(np.isfinite(resc), resc, -(2.0 ** 31)).astype(np.int64)
+        lut = np.clip(resc + zp_out, -128, 127).astype(np.int8)
         name = self.extra("int8_t", f"lut_{op.idx}", lut)
         n = prod(self.T[x].shape)
         self.calls.append(
-            f"    op_lut_i8({name}, {self.ptr(x)}, {self.ptr(out)}, {n});  /* op {op.idx} GELU */"
+            f"    op_lut_i8({name}, {self.ptr(x)}, {self.ptr(out)}, {n});  /* op {op.idx} {tag} */"
         )
+
+    def lower_gelu(self, op) -> None:
+        if op.options.get("approximate"):
+            raise NotImplementedError("approximate GELU")
+        f32 = np.float32
+
+        def gelu(deq):
+            erf = np.array([math.erf(float(v) * math.sqrt(0.5)) for v in deq], dtype=np.float64).astype(f32)
+            return f32(0.5) * deq * (f32(1.0) + erf)
+
+        self._lut_op(op, gelu, "GELU")
+
+    def lower_rsqrt(self, op) -> None:
+        # EMPIRICAL: TFLite's int8 RSQRT lands slightly above the exact value; a +1e-5 relative bias
+        # reproduces it on all observed (input, output) pairs of 25 RSQRT ops x 3 inputs (0 vs ~4
+        # mismatching pairs without it). The true algorithm is unknown (see docs/GENERATOR.md).
+        bias = np.float32(1.0 + RSQRT_REL_BIAS)
+        self._lut_op(op, lambda d: (np.float32(1.0) / np.sqrt(d)) * bias, "RSQRT")
+
+    def lower_mean(self, op) -> None:
+        x, axes_t, out = op.inputs[0], op.inputs[1], op.outputs[0]
+        self.check_i8(x, out)
+        tx, to = self.T[x], self.T[out]
+        rank = len(tx.shape)
+        if rank > EW_MAX_RANK:
+            raise NotImplementedError("mean rank")
+        axes = {int(a) % rank for a in np.atleast_1d(self.T[axes_t].data)}
+        reduce = [1 if d in axes else 0 for d in range(rank)]
+        count = prod([tx.shape[d] for d in axes])
+        n_out = prod([tx.shape[d] for d in range(rank) if d not in axes])
+        if n_out > 4096:
+            raise NotImplementedError(f"mean output {n_out} > MEAN_MAX_OUT")
+        s_in, zp_in = scale_zp(tx)
+        s_out, zp_out = scale_zp(to)
+        mult, shift = quantize_multiplier(float(s_in) / float(s_out) / count)
+        arr = lambda v: "{" + ",".join(str(x) for x in pad_list(list(v))) + "}"  # noqa: E731
+        self.param_defs.append(
+            f"static const mean_params_t p_{op.idx} = {{ .rank = {rank}, .in_shape = {arr(tx.shape)}, "
+            f".reduce = {arr(reduce)}, .count = {count}, .zp_in = {zp_in}, .zp_out = {zp_out}, "
+            f".mult = {mult}, .shift = {shift} }};"
+        )
+        self.calls.append(
+            f"    op_mean_i8(&p_{op.idx}, {self.ptr(x)}, {self.ptr(out)});  /* op {op.idx} MEAN axes {sorted(axes)} */"
+        )
+
+    def lower_squared_difference(self, op) -> None:
+        a, b, out, ta, tb, to, rank, sa, sb = self._ew_common(op)
+        s1, z1 = scale_zp(ta)
+        s2, z2 = scale_zp(tb)
+        so, zo = scale_zp(to)
+        left = 7
+        twice_max = 2.0 * max(float(s1), float(s2))
+        m1, sh1 = quantize_multiplier(float(s1) / twice_max)
+        m2, sh2 = quantize_multiplier(float(s2) / twice_max)
+        mo, sho = quantize_multiplier(twice_max * twice_max / ((1 << (2 * left)) * float(so)))
+        fields = dict(zp_a=z1, zp_b=z2, zp_out=zo, left_shift=left, mult_a=m1, mult_b=m2,
+                      mult_out=mo, shift_a=sh1, shift_b=sh2, shift_out=sho)
+        self._emit_ew(op, "op_sqdiff_i8", fields, rank, to, sa, sb, a, b, out, "SQUARED_DIFFERENCE")
 
     def _ew_common(self, op):
         a, b = op.inputs[0], op.inputs[1]

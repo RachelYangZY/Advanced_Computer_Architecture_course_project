@@ -43,6 +43,18 @@ typedef struct {
     int32_t stride[EW_MAX_RANK];     /* input stride for each output dim */
 } transpose_params_t;
 
+/* MEAN over a set of axes (quantized, input/output scales differ). */
+#define MEAN_MAX_OUT 4096
+typedef struct {
+    int32_t rank;
+    int32_t in_shape[EW_MAX_RANK];
+    int32_t reduce[EW_MAX_RANK];     /* 1 = axis is reduced */
+    int32_t count;                   /* number of elements averaged per output */
+    int32_t zp_in, zp_out, mult, shift;
+} mean_params_t;
+
+void op_mean_i8(const mean_params_t *p, const int8_t *in, int8_t *out);
+void op_sqdiff_i8(const ew_params_t *p, const int8_t *a, const int8_t *b, int8_t *out);
 void op_fc_i8(const fc_params_t *p, const int8_t *in, int8_t *out);
 void op_lut_i8(const int8_t *lut256, const int8_t *in, int8_t *out, int32_t n);
 void op_add_i8(const ew_params_t *p, const int8_t *a, const int8_t *b, int8_t *out);

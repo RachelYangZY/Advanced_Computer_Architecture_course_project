@@ -7,11 +7,13 @@ source ~/aca-venv/bin/activate
 cd "$(dirname "$0")/../.."
 
 OPS="${1:-56:60}"
-REF=build/ref
+# REF_VARIANT: "" (sample.png), flip, or invert -> separate reference dumps for extra test inputs.
+VARIANT="${REF_VARIANT:-}"
+REF="build/ref${VARIANT:+_$VARIANT}"
 mkdir -p build
 
 if [ ! -f "$REF/t0.bin" ]; then
-    python tools/tflite2c/dump_ref_tensors.py "$REF" 2>&1 | grep -v -i warn
+    python tools/tflite2c/dump_ref_tensors.py "$REF" $VARIANT 2>&1 | grep -v -i warn
 fi
 
 rc=0

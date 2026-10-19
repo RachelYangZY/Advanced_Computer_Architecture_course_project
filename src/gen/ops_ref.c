@@ -56,6 +56,18 @@ static int8_t mul_one(const ew_params_t *p, int8_t a, int8_t b)
     return tfl_clamp_i8(raw, p->act_min, p->act_max);
 }
 
+/* TFLite SQUARED_DIFFERENCE (int8): inputs scaled by left_shift, diff squared, then requantized. */
+static int8_t sqdiff_one(const ew_params_t *p, int8_t a, int8_t b)
+{
+    int32_t sa = ((int32_t)a - p->zp_a) * (1 << p->left_shift);
+    int32_t sb = ((int32_t)b - p->zp_b) * (1 << p->left_shift);
+    sa = tfl_mul_qm(sa, p->mult_a, p->shift_a);
+    sb = tfl_mul_qm(sb, p->mult_b, p->shift_b);
+    int32_t d = sa - sb;
+    int32_t raw = tfl_mul_qm(d * d, p->mult_out, p->shift_out) + p->zp_out;
+    return tfl_clamp_i8(raw, p->act_min, p->act_max);
+}
+
 static void ew_run(const ew_params_t *p, const int8_t *a, const int8_t *b, int8_t *out, ew_fn fn)
 {
     int32_t total = 1;
@@ -77,6 +89,48 @@ static void ew_run(const ew_params_t *p, const int8_t *a, const int8_t *b, int8_
             ob -= (int64_t)p->stride_b[d] * p->shape[d];
             idx[d] = 0;
         }
+    }
+}
+
+void op_sqdiff_i8(const ew_params_t *p, const int8_t *a, const int8_t *b, int8_t *out)
+{
+    ew_run(p, a, b, out, sqdiff_one);
+}
+
+void op_mean_i8(const mean_params_t *p, const int8_t *in, int8_t *out)
+{
+    static int32_t acc[MEAN_MAX_OUT];
+    int32_t ostride[EW_MAX_RANK];
+    int32_t n_out = 1, total = 1;
+    for (int d = p->rank - 1; d >= 0; d--) {
+        total *= p->in_shape[d];
+        if (p->reduce[d]) {
+            ostride[d] = 0;
+        } else {
+            ostride[d] = n_out;
+            n_out *= p->in_shape[d];
+        }
+    }
+    for (int32_t i = 0; i < n_out; i++) {
+        acc[i] = 0;
+    }
+    int32_t idx[EW_MAX_RANK] = {0};
+    int64_t o = 0;
+    for (int32_t n = 0; n < total; n++) {
+        acc[o] += in[n];
+        for (int d = p->rank - 1; d >= 0; d--) {
+            idx[d]++;
+            o += ostride[d];
+            if (idx[d] < p->in_shape[d]) {
+                break;
+            }
+            o -= (int64_t)ostride[d] * p->in_shape[d];
+            idx[d] = 0;
+        }
+    }
+    for (int32_t i = 0; i < n_out; i++) {
+        int32_t v = tfl_mul_qm(acc[i] - p->zp_in * p->count, p->mult, p->shift) + p->zp_out;
+        out[i] = tfl_clamp_i8(v, -128, 127);
     }
 }
 
