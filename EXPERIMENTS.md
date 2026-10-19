@@ -554,7 +554,7 @@ Results (`sample.png`, 1,253,683,200 MACs):
 |---|---:|---:|---:|---|---|
 | B0 | 12,598,660,515 | 1.00× | 10.05 | bit-exact | 960 = golden |
 | B1 | 6,478,403,747 | 1.94× | 5.17 | bit-exact | 960 = golden |
-| X1 | 1,480,440,897 | 8.51× | 1.18 | 940 of 1000 differ (max 34) | 960 = golden |
+| X1 | 1,522,226,359 | 8.28× | 1.21 | bit-exact (after the xrequant redefinition below) | 960 = golden |
 | X1MAC | 1,580,552,607 | 7.97× | 1.26 | bit-exact | 960 = golden |
 
 Instructions by op kind (millions):
@@ -578,12 +578,22 @@ instructions); the stem is 422 M / 139 M / 26 M / 27 M.
 
 Findings:
 
-- **`xrequant` is not TFLite-exact.** It rounds once, `(acc*mult + 2^(s-1)) >> s`. TFLite rounds
-  twice: a rounding doubling high multiply, then a rounding right shift. Values that land just
-  below a tie after the first rounding come out one higher. On the Block 0 MLP alone this changes
-  367 of 37,824 outputs by 1. Over 12 blocks the differences compound: 940 of 1000 logits differ
-  (max 34), although the top-1 class is unchanged on this image. X1MAC shows the same `xqmac8`
-  speedup with exact logits, and `xrequant` saves only 6% of X1MAC's instructions (100 M).
+- **`xrequant` was not TFLite-exact, now it is.** The first version rounded once,
+  `(acc*mult + 2^(s-1)) >> s`; TFLite rounds twice (rounding doubling high multiply, then a rounding
+  right shift). That changed 367 of 37,824 outputs of the Block 0 MLP, and over 12 blocks 940 of 1000
+  logits differed (max 34; top-1 unchanged). `xrequant` now has a mode field (ctrl[17:16]):
+  1 = TFLite half-up shift (FC, CONV), 2 = half-away shift (BMM); mode 0 is the old single rounding,
+  kept so the earlier tile experiments reproduce. With modes 1/2 the X1 logits are bit-exact. The cost
+  is a few extra instructions per output (the left-shift and control-word setup): X1 went from
+  1.480 G to 1.522 G. `xrequant` saves 3.7% of X1MAC's instructions (58 M), so on this model almost all
+  of X1's speedup comes from `xqmac8`; the instruction matters more per output element than end to end.
+  Hardware cost: the same 32×32 multiplier, plus a second rounding adder and a mode mux.
+- **ISA verification** (`bash scripts/run/verify_isa.sh`, log in `results/isa_verify.log`): 20 M host
+  cases comparing the oracle with TFLite's fixed-point helpers (0 mismatches), and on Spike, per seed
+  (3 seeds), 864 directed + 200,000 random `xqmac8` and 59,094 directed + 200,000 random `xrequant`
+  executions against the C oracles (0 failures). Directed cases: lane isolation, all -128/127 lanes,
+  INT64 accumulator wraparound; INT32_MIN × INT32_MIN saturation, shifts 0..31, exact ties, zero-point
+  and int8 saturation extremes. A deliberately broken oracle is caught (1,575 failures).
 - **Amdahl after X1.** FC/BMM/CONV drop from 94% of B0 to 46% of X1. The reference
   elementwise and LayerNorm ops (ADD, MUL, SQUARED_DIFFERENCE, MEAN) are now about 42% of X1. They
   use a generic broadcast loop with a function pointer per element, so they are the next software

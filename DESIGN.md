@@ -153,11 +153,22 @@ xrequant rd, rs1, rs2
 ctrl = rd
   zero_point = signed(ctrl[7:0])
   shift      = unsigned(ctrl[15:8])
+  mode       = ctrl[17:16]
 acc  = signed32(rs1)
 mult = signed32(rs2)
-tmp  = (acc * mult + (1 << (shift-1))) >> shift   # if shift > 0
+mode 1/2 (TFLite-exact, shift 0..31):
+  v   = srdhm(acc, mult) = (acc*mult + nudge) / 2^31   # truncating; nudge = 2^30 or 1-2^30 by sign
+  tmp = mode 1: (v + (1 << (shift-1))) >> shift        # round half up   (FULLY_CONNECTED, CONV_2D)
+        mode 2: RoundingDivideByPOT(v, shift)          # half away from zero (BATCH_MATMUL, ADD, ...)
+mode 0 (legacy single rounding): tmp = (acc*mult + (1 << (shift-1))) >> shift
+mode 3: reserved, illegal instruction
 rd   = sext_int8(sat_int8(tmp + zero_point))
 ```
+
+The first design (mode 0 only) rounded once and was not bit-exact against TFLite, which rounds twice:
+the full-model logits differed (940 of 1000). Modes 1 and 2 reproduce TFLite exactly; a TFLite
+multiplier with a left shift is applied to `acc` by software before the instruction. Oracle:
+`src/kernels/xrequant_ref.h`; verification: `scripts/run/verify_isa.sh`.
 
 Encoding (custom-0 family, distinct from Xqmac8 by `funct3`):
 

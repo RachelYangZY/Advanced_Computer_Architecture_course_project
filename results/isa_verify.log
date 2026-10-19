@@ -1,0 +1,12 @@
+xqmac8:   directed=864 random=200000
+xrequant: directed=59094 random=200000
+seed=1 tests=459958 failures=0
+RESULT PASS
+xqmac8:   directed=864 random=200000
+xrequant: directed=59094 random=200000
+seed=2 tests=459958 failures=0
+RESULT PASS
+xqmac8:   directed=864 random=200000
+xrequant: directed=59094 random=200000
+seed=3 tests=459958 failures=0
+RESULT PASS

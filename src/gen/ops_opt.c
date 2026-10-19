@@ -33,15 +33,22 @@ static uint64_t bt_words[BMM_MAX_B / 8];
 static uint64_t row_words[2][PATCH_MAX / 8];
 
 #ifdef USE_XREQUANT
-/* xrequant: (acc * mult + 2^(s-1)) >> s + zp, saturated to int8; ctrl = s << 8 | zp. */
-static inline int32_t xrequant(int32_t acc, int32_t mult, int32_t shift, int32_t zp)
+/*
+ * xrequant, TFLite modes (see src/kernels/xrequant_ref.h): srdhm + rounding right shift + zp +
+ * saturation in one instruction. mode 1 = half-up shift (FC, CONV), mode 2 = half-away (BMM).
+ * A positive TFLite shift (left shift) is applied to the accumulator first, as TFLite does.
+ */
+static inline int32_t xrequant(int32_t acc, int32_t mult, int32_t shift, int32_t zp, int mode)
 {
-    int64_t r = (int64_t)(((uint64_t)(31 - shift) & 0xff) << 8 | ((uint64_t)zp & 0xff));
+    int left = shift > 0 ? shift : 0;
+    int right = shift > 0 ? 0 : -shift;
+    acc = (int32_t)((uint32_t)acc << left);
+    int64_t r = (int64_t)(((uint64_t)mode << 16) | ((uint64_t)right << 8) | ((uint64_t)zp & 0xff));
     __asm__(".insn r 0x0b, 1, 0x2b, %0, %1, %2" : "+r"(r) : "r"((int64_t)acc), "r"((int64_t)mult));
     return (int32_t)r;
 }
-#define RQ_UP(acc, mult, shift, zp, lo, hi) tfl_clamp_i8(xrequant((acc), (mult), (shift), (zp)), (lo), (hi))
-#define RQ_GEMM(acc, mult, shift, zp, lo, hi) RQ_UP(acc, mult, shift, zp, lo, hi)
+#define RQ_UP(acc, mult, shift, zp, lo, hi) tfl_clamp_i8(xrequant((acc), (mult), (shift), (zp), 1), (lo), (hi))
+#define RQ_GEMM(acc, mult, shift, zp, lo, hi) tfl_clamp_i8(xrequant((acc), (mult), (shift), (zp), 2), (lo), (hi))
 #else
 #define RQ_UP(acc, mult, shift, zp, lo, hi) tfl_clamp_i8(tfl_mul_qm_up((acc), (mult), (shift)) + (zp), (lo), (hi))
 #define RQ_GEMM(acc, mult, shift, zp, lo, hi) tfl_clamp_i8(tfl_mul_qm((acc), (mult), (shift)) + (zp), (lo), (hi))

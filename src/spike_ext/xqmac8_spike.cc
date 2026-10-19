@@ -59,14 +59,42 @@ static reg_t xrequant_execute(processor_t* processor, insn_t insn, reg_t pc)
     reg_t ctrl = state->XPR[insn.rd()];
     int32_t zero_point = static_cast<int8_t>(ctrl & 0xff);
     int shift = static_cast<int>((ctrl >> 8) & 0xff);
+    int mode = static_cast<int>((ctrl >> 16) & 0x3);
     int32_t accumulator = static_cast<int32_t>(state->XPR[insn.rs1()]);
     int32_t multiplier = static_cast<int32_t>(state->XPR[insn.rs2()]);
 
-    int64_t product =
-        static_cast<int64_t>(accumulator) * static_cast<int64_t>(multiplier);
-    if (shift > 0) {
-        const int64_t rounding = static_cast<int64_t>(1) << (shift - 1);
-        product = (product + rounding) >> shift;
+    // mode 0: legacy single rounding; 1: TFLite half-up; 2: TFLite half-away; 3: reserved.
+    // Semantics are defined in src/kernels/xrequant_ref.h.
+    if (mode == 3 || (mode != 0 && shift > 31)) {
+        throw trap_illegal_instruction(insn.bits());
+    }
+    int64_t product;
+    if (mode == 0) {
+        product = static_cast<int64_t>(accumulator) * static_cast<int64_t>(multiplier);
+        if (shift > 0) {
+            const int64_t rounding = static_cast<int64_t>(1) << (shift - 1);
+            product = (product + rounding) >> shift;
+        }
+    } else {
+        int64_t v;
+        if (accumulator == INT32_MIN && multiplier == INT32_MIN) {
+            v = INT32_MAX;
+        } else {
+            int64_t ab = static_cast<int64_t>(accumulator) * static_cast<int64_t>(multiplier);
+            int64_t n = ab + (ab >= 0 ? (static_cast<int64_t>(1) << 30)
+                                      : (1 - (static_cast<int64_t>(1) << 30)));
+            v = n >= 0 ? (n >> 31) : -((-n) >> 31);
+        }
+        if (shift == 0) {
+            product = v;
+        } else if (mode == 1) {
+            product = (v + (static_cast<int64_t>(1) << (shift - 1))) >> shift;
+        } else {
+            int64_t mask = (static_cast<int64_t>(1) << shift) - 1;
+            int64_t rem = v & mask;
+            int64_t thr = (mask >> 1) + (v < 0 ? 1 : 0);
+            product = (v >> shift) + (rem > thr ? 1 : 0);
+        }
     }
     product += zero_point;
     if (product > 127) {
