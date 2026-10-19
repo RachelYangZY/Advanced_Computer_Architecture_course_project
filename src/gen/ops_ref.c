@@ -230,6 +230,60 @@ void op_mul_i8(const ew_params_t *p, const int8_t *a, const int8_t *b, int8_t *o
     ew_run(p, a, b, out, mul_one);
 }
 
+void op_conv2d_i8(const conv_params_t *p, const int8_t *in, int8_t *out)
+{
+    for (int32_t oy = 0; oy < p->out_h; oy++) {
+        for (int32_t ox = 0; ox < p->out_w; ox++) {
+            int8_t *o = out + ((int64_t)oy * p->out_w + ox) * p->out_c;
+            for (int32_t oc = 0; oc < p->out_c; oc++) {
+                const int8_t *w = p->w + (int64_t)oc * p->k_h * p->k_w * p->in_c;
+                int32_t acc = 0;
+                for (int32_t ky = 0; ky < p->k_h; ky++) {
+                    int32_t iy = oy * p->stride_h - p->pad_top + ky;
+                    if (iy < 0 || iy >= p->in_h) continue;
+                    for (int32_t kx = 0; kx < p->k_w; kx++) {
+                        int32_t ix = ox * p->stride_w - p->pad_left + kx;
+                        if (ix < 0 || ix >= p->in_w) continue;
+                        const int8_t *x = in + ((int64_t)iy * p->in_w + ix) * p->in_c;
+                        const int8_t *wk = w + ((int64_t)ky * p->k_w + kx) * p->in_c;
+                        for (int32_t c = 0; c < p->in_c; c++) {
+                            acc += ((int32_t)x[c] - p->in_zp) * (int32_t)wk[c];
+                        }
+                    }
+                }
+                acc += p->bias[oc];
+                acc = tfl_mul_qm_up(acc, p->mult[oc], p->shift[oc]);
+                o[oc] = tfl_clamp_i8(acc + p->out_zp, p->act_min, p->act_max);
+            }
+        }
+    }
+}
+
+void op_concat_part_i8(const concat_params_t *p, const int8_t *in, int8_t *out,
+                       int32_t in_chunk, int32_t offset)
+{
+    for (int32_t r = 0; r < p->outer; r++) {
+        const int8_t *s = in + (int64_t)r * in_chunk;
+        int8_t *d = out + (int64_t)r * p->out_chunk + offset;
+        for (int32_t i = 0; i < in_chunk; i++) {
+            d[i] = s[i];
+        }
+    }
+}
+
+void op_requant_i8(const int8_t *in, int8_t *out, int32_t n, int32_t zp_in, int32_t zp_out,
+                   int32_t mult, int32_t shift)
+{
+    for (int32_t i = 0; i < n; i++) {
+        if (mult == 0) {
+            out[i] = in[i];
+        } else {
+            int32_t v = tfl_mul_qm((int32_t)in[i] - zp_in, mult, shift) + zp_out;
+            out[i] = tfl_clamp_i8(v, -128, 127);
+        }
+    }
+}
+
 void op_transpose_i8(const transpose_params_t *p, const int8_t *in, int8_t *out)
 {
     int32_t total = 1;

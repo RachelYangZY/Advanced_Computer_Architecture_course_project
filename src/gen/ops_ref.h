@@ -77,6 +77,28 @@ typedef struct {
     int32_t zp_out;
 } softmax_params_t;
 
+/* CONV_2D, NHWC input (batch 1), weights [oc][kh][kw][ic] per-channel, explicit top/left padding. */
+typedef struct {
+    const int8_t *w;
+    const int32_t *bias;             /* [oc] */
+    const int32_t *mult;             /* [oc] Q31 multipliers */
+    const int32_t *shift;            /* [oc] */
+    int32_t in_h, in_w, in_c, out_h, out_w, out_c, k_h, k_w;
+    int32_t stride_h, stride_w, pad_top, pad_left;
+    int32_t in_zp, out_zp, act_min, act_max;
+} conv_params_t;
+
+/* CONCATENATION: each input contributes a chunk of in_chunk bytes per outer row. */
+typedef struct {
+    int32_t outer, out_chunk;
+} concat_params_t;
+
+void op_conv2d_i8(const conv_params_t *p, const int8_t *in, int8_t *out);
+void op_concat_part_i8(const concat_params_t *p, const int8_t *in, int8_t *out,
+                       int32_t in_chunk, int32_t offset);
+/* QUANTIZE int8 -> int8: out = (x - zp_in) * real + zp_out (mult 0 means plain copy). */
+void op_requant_i8(const int8_t *in, int8_t *out, int32_t n, int32_t zp_in, int32_t zp_out,
+                   int32_t mult, int32_t shift);
 void op_slice_i8(const slice_params_t *p, const int8_t *in, int8_t *out);
 void op_bmm_i8(const bmm_params_t *p, const int8_t *a, const int8_t *b, int8_t *out);
 void op_softmax_i8(const softmax_params_t *p, const int8_t *in, int8_t *out);

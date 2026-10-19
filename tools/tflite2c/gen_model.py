@@ -285,6 +285,86 @@ class Generator:
             f"    op_fc_i8(&p_{op.idx}, {self.ptr(x)}, {self.ptr(out)});  /* op {op.idx} FC {rows}x{k}x{n} */"
         )
 
+    def lower_conv_2d(self, op) -> None:
+        x, w, b = op.inputs[0], op.inputs[1], op.inputs[2] if len(op.inputs) > 2 else -1
+        out = op.outputs[0]
+        self.check_i8(x, w, out)
+        tx, tw, to = self.T[x], self.T[w], self.T[out]
+        o = op.options
+        if o.get("dilation_h", 1) != 1 or o.get("dilation_w", 1) != 1:
+            raise NotImplementedError("dilated CONV_2D")
+        if tx.shape[0] != 1 or tx.shape[3] != tw.shape[3]:
+            raise NotImplementedError(f"CONV_2D shapes {tx.shape} x {tw.shape} (batch 1, no groups)")
+        if np.any(tw.zero_points != 0):
+            raise NotImplementedError("CONV_2D weights must be symmetric (zp 0)")
+        _, in_h, in_w, in_c = tx.shape
+        oc, k_h, k_w, _ = tw.shape
+        _, out_h, out_w, _ = to.shape
+        sh, sw = o.get("stride_h", 1), o.get("stride_w", 1)
+        if o.get("padding", 0) == 1:      # VALID
+            pad_t = pad_l = 0
+        else:                             # SAME
+            pad_t = max((out_h - 1) * sh + k_h - in_h, 0) // 2
+            pad_l = max((out_w - 1) * sw + k_w - in_w, 0) // 2
+        s_in, zp_in = scale_zp(tx)
+        s_out, zp_out = scale_zp(to)
+        w_scales = tw.scales if len(tw.scales) > 1 else np.repeat(tw.scales, oc)
+        qs = [quantize_multiplier(float(s_in) * float(w_scales[c]) / float(s_out)) for c in range(oc)]
+        lo, hi = act_range(o.get("fused_activation", 0))
+        wname = self.const(w)
+        bname = self.const(b) if b >= 0 else self.extra("int32_t", f"zero_bias_{op.idx}", np.zeros(oc, np.int32))
+        mname = self.extra("int32_t", f"conv_mult_{op.idx}", np.array([q[0] for q in qs], np.int32))
+        sname = self.extra("int32_t", f"conv_shift_{op.idx}", np.array([q[1] for q in qs], np.int32))
+        self.param_defs.append(
+            f"static const conv_params_t p_{op.idx} = {{ .w = {wname}, .bias = {bname}, .mult = {mname}, "
+            f".shift = {sname}, .in_h = {in_h}, .in_w = {in_w}, .in_c = {in_c}, .out_h = {out_h}, "
+            f".out_w = {out_w}, .out_c = {oc}, .k_h = {k_h}, .k_w = {k_w}, .stride_h = {sh}, "
+            f".stride_w = {sw}, .pad_top = {pad_t}, .pad_left = {pad_l}, .in_zp = {zp_in}, "
+            f".out_zp = {zp_out}, .act_min = {lo}, .act_max = {hi} }};"
+        )
+        self.calls.append(
+            f"    op_conv2d_i8(&p_{op.idx}, {self.ptr(x)}, {self.ptr(out)});  "
+            f"/* op {op.idx} CONV_2D {in_h}x{in_w}x{in_c} -> {out_h}x{out_w}x{oc}, k{k_h}x{k_w} s{sh} */"
+        )
+
+    def lower_concatenation(self, op) -> None:
+        out = op.outputs[0]
+        to = self.T[out]
+        rank = len(to.shape)
+        axis = int(op.options.get("axis", 0)) % rank
+        if op.options.get("fused_activation", 0):
+            raise NotImplementedError("fused activation on CONCATENATION")
+        inner = prod(to.shape[axis + 1:])
+        outer = prod(to.shape[:axis])
+        out_chunk = to.shape[axis] * inner
+        self.param_defs.append(
+            f"static const concat_params_t p_{op.idx} = {{ .outer = {outer}, .out_chunk = {out_chunk} }};"
+        )
+        offset = 0
+        for i in op.inputs:
+            self.check_i8(i)
+            if scale_zp(self.T[i]) != scale_zp(to):
+                raise NotImplementedError(f"CONCATENATION {op.idx}: input {i} needs requantization")
+            chunk = self.T[i].shape[axis] * inner
+            src = self.const(i) if self.T[i].is_const else self.ptr(i)
+            self.calls.append(
+                f"    op_concat_part_i8(&p_{op.idx}, {src}, {self.ptr(out)}, {chunk}, {offset});  "
+                f"/* op {op.idx} CONCATENATION axis {axis} (t{i}) */"
+            )
+            offset += chunk
+
+    def lower_quantize(self, op) -> None:
+        x, out = op.inputs[0], op.outputs[0]
+        self.check_i8(x, out)
+        s_in, zp_in = scale_zp(self.T[x])
+        s_out, zp_out = scale_zp(self.T[out])
+        mult, shift = (0, 0) if (s_in, zp_in) == (s_out, zp_out) else quantize_multiplier(s_in / s_out)
+        n = prod(self.T[x].shape)
+        self.calls.append(
+            f"    op_requant_i8({self.ptr(x)}, {self.ptr(out)}, {n}, {zp_in}, {zp_out}, {mult}, {shift});"
+            f"  /* op {op.idx} QUANTIZE */"
+        )
+
     def _lut_op(self, op, func, tag: str) -> None:
         """INT8->INT8 lookup table op, built like TFLite's PopulateLookupTable (float32)."""
         x, out = op.inputs[0], op.outputs[0]
