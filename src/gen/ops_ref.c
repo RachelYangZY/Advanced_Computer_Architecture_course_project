@@ -2,7 +2,13 @@
 
 #include "tflite_math.h"
 
-void op_fc_i8(const fc_params_t *p, const int8_t *in, int8_t *out)
+#define WEAK __attribute__((weak))
+
+WEAK void op_fc_i8(const fc_params_t *p, const int8_t *in, int8_t *out) { op_fc_i8_ref(p, in, out); }
+WEAK void op_bmm_i8(const bmm_params_t *p, const int8_t *a, const int8_t *b, int8_t *out) { op_bmm_i8_ref(p, a, b, out); }
+WEAK void op_conv2d_i8(const conv_params_t *p, const int8_t *in, int8_t *out) { op_conv2d_i8_ref(p, in, out); }
+
+void op_fc_i8_ref(const fc_params_t *p, const int8_t *in, int8_t *out)
 {
     for (int32_t r = 0; r < p->rows; r++) {
         const int8_t *x = in + (int64_t)r * p->k;
@@ -173,7 +179,7 @@ void op_slice_i8(const slice_params_t *p, const int8_t *in, int8_t *out)
     }
 }
 
-void op_bmm_i8(const bmm_params_t *p, const int8_t *a, const int8_t *b, int8_t *out)
+void op_bmm_i8_ref(const bmm_params_t *p, const int8_t *a, const int8_t *b, int8_t *out)
 {
     for (int32_t bi = 0; bi < p->batch; bi++) {
         const int8_t *A = a + (int64_t)bi * p->m * p->k;
@@ -230,7 +236,7 @@ void op_mul_i8(const ew_params_t *p, const int8_t *a, const int8_t *b, int8_t *o
     ew_run(p, a, b, out, mul_one);
 }
 
-void op_conv2d_i8(const conv_params_t *p, const int8_t *in, int8_t *out)
+void op_conv2d_i8_ref(const conv_params_t *p, const int8_t *in, int8_t *out)
 {
     for (int32_t oy = 0; oy < p->out_h; oy++) {
         for (int32_t ox = 0; ox < p->out_w; ox++) {

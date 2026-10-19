@@ -143,6 +143,7 @@ class Generator:
         self.alias: dict[int, int] = {}      # tensor -> tensor it aliases (RESHAPE)
         self.buffers: dict[int, Buffer] = {}
         self.arena_size = 0
+        self.macs: dict[int, int] = {}       # op idx -> multiply-accumulates
 
     # --- tensor roles ------------------------------------------------------
     def analyse(self) -> None:
@@ -237,6 +238,7 @@ class Generator:
 
     # --- per-op lowering ---------------------------------------------------
     def lower(self) -> None:
+        self.calls.append("    MODEL_PROF_MARK(0);")
         for pos, op in enumerate(self.ops):
             fn = getattr(self, f"lower_{op.kind.lower()}", None)
             if fn is None:
@@ -244,6 +246,16 @@ class Generator:
                     f"op #{op.idx} {op.kind} not supported by the generator yet"
                 )
             fn(op)
+            self.calls.append(f"    MODEL_PROF_MARK({pos + 1});")
+
+    def bias_eff(self, op, w: int, b: int, zp_in: int, n: int) -> str:
+        """bias - zp_in * sum(w) per output channel, so optimized kernels can use a plain int8 dot."""
+        wsum = self.T[w].data.reshape(n, -1).astype(np.int64).sum(axis=1)
+        bias = self.T[b].data.astype(np.int64) if b >= 0 else np.zeros(n, np.int64)
+        eff = bias - zp_in * wsum
+        if np.any(np.abs(eff) >= 2 ** 31):
+            raise ValueError(f"op {op.idx}: folded bias overflows int32")
+        return self.extra("int32_t", f"bias_eff_{op.idx}", eff.astype(np.int32))
 
     def check_i8(self, *ids: int) -> None:
         for i in ids:
@@ -276,8 +288,10 @@ class Generator:
         bname = self.const(b) if b >= 0 else self.extra("int32_t", f"zero_bias_{op.idx}", np.zeros(n, np.int32))
         mname = self.extra("int32_t", f"fc_mult_{op.idx}", np.array(mult, np.int32))
         sname = self.extra("int32_t", f"fc_shift_{op.idx}", np.array(shift, np.int32))
+        ename = self.bias_eff(op, w, b, zp_in, n)
+        self.macs[op.idx] = rows * k * n
         self.param_defs.append(
-            f"static const fc_params_t p_{op.idx} = {{ .w = {wname}, .bias = {bname}, "
+            f"static const fc_params_t p_{op.idx} = {{ .w = {wname}, .bias = {bname}, .bias_eff = {ename}, "
             f".mult = {mname}, .shift = {sname}, .in_zp = {zp_in}, .out_zp = {zp_out}, "
             f".act_min = {lo}, .act_max = {hi}, .rows = {rows}, .k = {k}, .n = {n} }};"
         )
@@ -315,8 +329,10 @@ class Generator:
         bname = self.const(b) if b >= 0 else self.extra("int32_t", f"zero_bias_{op.idx}", np.zeros(oc, np.int32))
         mname = self.extra("int32_t", f"conv_mult_{op.idx}", np.array([q[0] for q in qs], np.int32))
         sname = self.extra("int32_t", f"conv_shift_{op.idx}", np.array([q[1] for q in qs], np.int32))
+        ename = self.bias_eff(op, w, b, zp_in, oc)
+        self.macs[op.idx] = out_h * out_w * oc * k_h * k_w * in_c
         self.param_defs.append(
-            f"static const conv_params_t p_{op.idx} = {{ .w = {wname}, .bias = {bname}, .mult = {mname}, "
+            f"static const conv_params_t p_{op.idx} = {{ .w = {wname}, .bias = {bname}, .bias_eff = {ename}, .mult = {mname}, "
             f".shift = {sname}, .in_h = {in_h}, .in_w = {in_w}, .in_c = {in_c}, .out_h = {out_h}, "
             f".out_w = {out_w}, .out_c = {oc}, .k_h = {k_h}, .k_w = {k_w}, .stride_h = {sh}, "
             f".stride_w = {sw}, .pad_top = {pad_t}, .pad_left = {pad_l}, .in_zp = {zp_in}, "
@@ -474,6 +490,7 @@ class Generator:
         so, zo = scale_zp(to)
         mult, shift = quantize_multiplier(float(sa) * float(sb) / float(so))
         lo, hi = act_range(0)
+        self.macs[op.idx] = batch * m * k * n
         self.param_defs.append(
             f"static const bmm_params_t p_{op.idx} = {{ .batch = {batch}, .m = {m}, .k = {k}, .n = {n}, "
             f".adj_x = {int(adj_x)}, .adj_y = {int(adj_y)}, .zp_a = {za}, .zp_b = {zb}, .zp_out = {zo}, "
@@ -628,10 +645,27 @@ class Generator:
                 f'    {{ {t}, {self.off(t)}, {prod(self.T[t].shape)}, {1 if t in ins else 0}, '
                 f'{1 if t in set(checks) else 0}, {1 if t in approx else 0}, "{sanitize(self.T[t].name)}" }},'
             )
+        prof = [
+            "#ifdef MODEL_PROF",
+            f"uint64_t model_prof_instret[{len(self.ops) + 1}], model_prof_cycle[{len(self.ops) + 1}];",
+            "#define MODEL_PROF_MARK(i) do { uint64_t ins_, cyc_; "
+            "__asm__ volatile(\"csrr %0, minstret\\n\\tcsrr %1, mcycle\" : \"=r\"(ins_), \"=r\"(cyc_)); "
+            "model_prof_instret[i] = ins_; model_prof_cycle[i] = cyc_; } while (0)",
+            "#else",
+            "#define MODEL_PROF_MARK(i) ((void)0)",
+            "#endif",
+            "",
+            "const model_op_t model_ops[] = {",
+            *[f'    {{ {op.idx}, "{op.kind}", {self.macs.get(op.idx, 0)} }},' for op in self.ops],
+            "};",
+            f"const int model_op_count = {len(self.ops)};",
+        ]
         model_c = [
             header, '#include <stdint.h>\n#include "ops_ref.h"\n#include "weights.h"\n#include "model.h"\n',
             f"static int8_t arena_buf[{self.arena_size}] __attribute__((aligned(8)));",
             "int8_t *model_arena(void) { return arena_buf; }",
+            "",
+            *prof,
             "",
             *self.param_defs,
             "",
@@ -650,9 +684,36 @@ class Generator:
             f"#define MODEL_ARENA_BYTES {self.arena_size}\n"
             "typedef struct { int idx; int offset; int nbytes; int is_input; int check; int approx; const char *name; } model_tensor_t;\n"
             "extern const model_tensor_t model_tensors[];\nextern const int model_tensor_count;\n"
+            "typedef struct { int idx; const char *kind; int64_t macs; } model_op_t;\n"
+            "extern const model_op_t model_ops[];\nextern const int model_op_count;\n"
+            "/* with -DMODEL_PROF: counter values before op 0 and after each op (index i+1) */\n"
+            "extern uint64_t model_prof_instret[], model_prof_cycle[];\n"
             "int8_t *model_arena(void);\nvoid model_run(void);\n#endif\n",
             encoding="utf-8", newline="\n")
         (outdir / "harness.c").write_text(HARNESS, encoding="utf-8", newline="\n")
+
+    def emit_io(self, outdir: Path, ref_dir: Path) -> None:
+        """model_io.c: reference bytes of the boundary inputs (to load) and outputs (to check) on target."""
+        defs, rows = [], []
+        for t in self.inputs + self.outputs:
+            data = np.fromfile(ref_dir / f"t{t}.bin", dtype=np.int8)
+            if data.size != prod(self.T[t].shape):
+                raise ValueError(f"{ref_dir}/t{t}.bin: {data.size} bytes, expected {prod(self.T[t].shape)}")
+            defs.append(c_array("int8_t", f"io_t{t}", data)[1].replace("const int8_t", "static const int8_t", 1))
+            rows.append(f"    {{ {t}, {self.off(t)}, {data.size}, {1 if t in self.inputs else 0}, io_t{t} }},")
+        text = [
+            f"/* Generated by gen_model.py v{GENERATOR_VERSION} - DO NOT EDIT. Reference data: {ref_dir} */",
+            '#include "model_io.h"', "", *defs, "",
+            "const model_io_t model_io[] = {", *rows, "};",
+            f"const int model_io_count = {len(rows)};",
+        ]
+        (outdir / "model_io.c").write_text("\n".join(text) + "\n", encoding="utf-8", newline="\n")
+        (outdir / "model_io.h").write_text(
+            "#ifndef MODEL_IO_H\n#define MODEL_IO_H\n#include <stdint.h>\n"
+            "/* is_input: copy data into the arena before model_run(); else: expected output bytes */\n"
+            "typedef struct { int idx; int offset; int nbytes; int is_input; const int8_t *data; } model_io_t;\n"
+            "extern const model_io_t model_io[];\nextern const int model_io_count;\n#endif\n",
+            encoding="utf-8", newline="\n")
 
     def report(self) -> str:
         naive = sum((b.size + ALIGN - 1) // ALIGN * ALIGN for b in self.buffers.values())
@@ -719,6 +780,7 @@ def main() -> None:
     ap.add_argument("--ops", default="0:648", help="op index range START:END (end exclusive)")
     ap.add_argument("--out", default="build/gen")
     ap.add_argument("--no-reuse", action="store_true", help="give every tensor its own buffer")
+    ap.add_argument("--ref", help="TFLite tensor dump dir: also emit model_io.c (embedded input/golden)")
     args = ap.parse_args()
     s, e = (int(x) for x in args.ops.split(":"))
     model = tflite_ir.load(args.model)
@@ -727,6 +789,8 @@ def main() -> None:
     g.plan()
     g.lower()
     g.emit(Path(args.out))
+    if args.ref:
+        g.emit_io(Path(args.out), Path(args.ref))
     print(g.report())
     print(f"wrote {args.out}")
 

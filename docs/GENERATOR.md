@@ -1,6 +1,7 @@
 # TFLite → Bare-Metal C Generator
 
-Status: **phase 4 complete** — the whole model (ops 0:648, image → 1000 logits) is generated and the
+Status: **phase 5 complete** (whole model runs bare-metal on Spike for B0/B1/X1, see below);
+**phase 4 complete** — the whole model (ops 0:648, image → 1000 logits) is generated and the
 logits match TFLite exactly on all three test inputs. Arena with reuse: 340,416 B.
 Model facts live in `docs/MODEL_SUMMARY.md` (regenerate: `python tools/tflite2c/summarize_model.py`).
 Directory roles: `docs/REPO_LAYOUT.md`.
@@ -113,9 +114,26 @@ and reuse (boundary output) modes, on `sample.png`, `flip` and `invert` inputs:
 Ranges with BMM/SOFTMAX include the allowed off-by-one noted under Findings (only t682/t683 ever hit it).
 Arena for 0:648: 18,066,328 B without reuse, 340,416 B with reuse.
 
+## Target build (phase 5)
+
+```bash
+bash scripts/run/run_model.sh [START:END] [B0 B1 X1 X1MAC]   # generate, build, run on Spike, summarize
+HOST_EXTRA=src/gen/ops_opt.c bash scripts/run/gen_check.sh 0:648   # check the B1 kernels on the host
+```
+
+- `gen_model.py --ref DIR` also writes `model_io.c`: the TFLite bytes of the boundary inputs (copied
+  into the arena) and outputs (checked after `model_run()`).
+- `model.c` brackets every op with `MODEL_PROF_MARK(i)` (reads `minstret`/`mcycle` when built with
+  `-DMODEL_PROF`, no-op otherwise) and lists `model_ops[]` (op index, kind, MACs).
+- `src/gen/target_main.c` prints one `PROF` line per op, `TOTAL`, `CHECK` and `RESULT` over the
+  HTIF `write` syscall. `tools/analysis/model_profile.py` turns the logs into Markdown tables.
+- Kernel libraries: `ops_ref.c` defines `op_fc_i8`, `op_bmm_i8` and `op_conv2d_i8` as weak wrappers
+  around the `*_ref` kernels, and `ops_opt.c` (B1; X1 with `-DGEMM_XQMAC8 -DUSE_XREQUANT`) overrides
+  them. `scripts/build/build_model.sh` links one library per configuration (`-march=rv64imc_zicsr`;
+  Zicsr only for the counter reads).
+- Results: `EXPERIMENTS.md`, section "Whole Model on Spike".
+
 ## Next phases
 
-5. Target build: `main()`, `tohost`, `rdinstret` per-layer counters, B0/B1/X1 kernel libraries behind
-   the same param structs, Spike runs, EXPERIMENTS.md.
 6. Calibration on more images, host-side FP32-vs-INT8 accuracy, bit-exact parity scripts.
 

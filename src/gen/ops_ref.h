@@ -15,6 +15,7 @@
 typedef struct {
     const int8_t *w;        /* [n][k] */
     const int32_t *bias;    /* [n] (zeros if the op has no bias) */
+    const int32_t *bias_eff;/* [n] bias - in_zp * sum(w): lets optimized kernels use a plain int8 dot */
     const int32_t *mult;    /* [n] Q31 multipliers */
     const int32_t *shift;   /* [n] */
     int32_t in_zp, out_zp, act_min, act_max;
@@ -81,6 +82,7 @@ typedef struct {
 typedef struct {
     const int8_t *w;
     const int32_t *bias;             /* [oc] */
+    const int32_t *bias_eff;         /* [oc] bias - in_zp * sum(w) */
     const int32_t *mult;             /* [oc] Q31 multipliers */
     const int32_t *shift;            /* [oc] */
     int32_t in_h, in_w, in_c, out_h, out_w, out_c, k_h, k_w;
@@ -93,6 +95,13 @@ typedef struct {
     int32_t outer, out_chunk;
 } concat_params_t;
 
+/*
+ * op_fc_i8, op_bmm_i8 and op_conv2d_i8 are weak in ops_ref.c: a B1/X1 kernel library overrides
+ * them at link time and may fall back to the *_ref versions for shapes it does not handle.
+ */
+void op_fc_i8_ref(const fc_params_t *p, const int8_t *in, int8_t *out);
+void op_bmm_i8_ref(const bmm_params_t *p, const int8_t *a, const int8_t *b, int8_t *out);
+void op_conv2d_i8_ref(const conv_params_t *p, const int8_t *in, int8_t *out);
 void op_conv2d_i8(const conv_params_t *p, const int8_t *in, int8_t *out);
 void op_concat_part_i8(const concat_params_t *p, const int8_t *in, int8_t *out,
                        int32_t in_chunk, int32_t offset);
