@@ -51,8 +51,35 @@ typedef struct {
     int32_t reduce[EW_MAX_RANK];     /* 1 = axis is reduced */
     int32_t count;                   /* number of elements averaged per output */
     int32_t zp_in, zp_out, mult, shift;
+    int32_t single_round;            /* 1: exact single rounding of sum*mult; 0: gemmlowp double rounding */
 } mean_params_t;
 
+/* SLICE: copy a [begin, begin+size) box, rank <= EW_MAX_RANK. */
+typedef struct {
+    int32_t rank;
+    int32_t in_shape[EW_MAX_RANK];
+    int32_t begin[EW_MAX_RANK];
+    int32_t size[EW_MAX_RANK];       /* == output shape */
+} slice_params_t;
+
+/* BATCH_MATMUL on int8: out[b][i][j] = requant(sum_k (a - zp_a) * (b - zp_b)). */
+typedef struct {
+    int32_t batch, m, k, n;
+    int32_t adj_x, adj_y;            /* a is [k][m] if adj_x; b is [n][k] if adj_y */
+    int32_t zp_a, zp_b, zp_out, mult, shift, act_min, act_max;
+} bmm_params_t;
+
+/* SOFTMAX over the last axis (beta == 1, output scale 1/out_mul), table-driven integer math. */
+typedef struct {
+    int32_t rows, cols;
+    const uint32_t *exp_tab;         /* exp(-d * in_scale) * 2^31, d = row_max - x in [0,255] */
+    int32_t out_mul;                 /* 1 / out_scale (integer, e.g. 256) */
+    int32_t zp_out;
+} softmax_params_t;
+
+void op_slice_i8(const slice_params_t *p, const int8_t *in, int8_t *out);
+void op_bmm_i8(const bmm_params_t *p, const int8_t *a, const int8_t *b, int8_t *out);
+void op_softmax_i8(const softmax_params_t *p, const int8_t *in, int8_t *out);
 void op_mean_i8(const mean_params_t *p, const int8_t *in, int8_t *out);
 void op_sqdiff_i8(const ew_params_t *p, const int8_t *a, const int8_t *b, int8_t *out);
 void op_fc_i8(const fc_params_t *p, const int8_t *in, int8_t *out);

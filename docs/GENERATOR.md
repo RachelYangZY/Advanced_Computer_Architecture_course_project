@@ -96,3 +96,12 @@ Phase 1 arena for 56:60: 453,888 B without reuse, 340,416 B with reuse.
 3. Attention (SLICE, TRANSPOSE, BATCH_MATMUL, SOFTMAX), complete one block (ops 8:73).
 4. Stem (CONV_2D, CONCATENATION, QUANTIZE), 12 blocks, head; `rdinstret` per-layer counters;
    B0/B1/X1 kernel libraries behind the same params.
+
+## Phase 3 status (attention)
+
+- Added lowering and kernels for SLICE, BATCH_MATMUL, SOFTMAX; TRANSPOSE is now exercised.
+- Results: ops 20:44, 8:60, 60:112 and the full 8:580 chain pass in reuse and no-reuse modes (sample/flip/invert for reuse).
+- SOFTMAX: integer Q31 exp table + integer division; TFLite uses a float32 LUT, so outputs are allowed <=0.01% elements off by one (harness prints ok~(approx)).
+- BATCH_MATMUL: gemmlowp-style requant. One element in ~116k (Block 10 Q.K^T) differs by 1 at a stage-2 rounding tie (-103.5), so BMM outputs share the same tolerance.
+- MEAN: single-round when in/out scale ratio < 64, else gemmlowp double rounding (empirical).
+

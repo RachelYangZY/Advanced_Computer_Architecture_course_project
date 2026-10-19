@@ -129,8 +129,89 @@ void op_mean_i8(const mean_params_t *p, const int8_t *in, int8_t *out)
         }
     }
     for (int32_t i = 0; i < n_out; i++) {
-        int32_t v = tfl_mul_qm(acc[i] - p->zp_in * p->count, p->mult, p->shift) + p->zp_out;
-        out[i] = tfl_clamp_i8(v, -128, 127);
+        int32_t centered = acc[i] - p->zp_in * p->count;
+        int32_t v;
+        if (p->single_round) {
+            /* round-half-away of centered * mult / 2^(31 - shift), one rounding step */
+            int s = 31 - p->shift;
+            int64_t prod = (int64_t)centered * p->mult;
+            int64_t half = 1LL << (s - 1);
+            v = (int32_t)(prod >= 0 ? (prod + half) >> s : -((-prod + half) >> s));
+        } else {
+            v = tfl_mul_qm(centered, p->mult, p->shift);
+        }
+        out[i] = tfl_clamp_i8(v + p->zp_out, -128, 127);
+    }
+}
+
+void op_slice_i8(const slice_params_t *p, const int8_t *in, int8_t *out)
+{
+    int32_t in_stride[EW_MAX_RANK];
+    int64_t acc = 1;
+    for (int d = p->rank - 1; d >= 0; d--) {
+        in_stride[d] = (int32_t)acc;
+        acc *= p->in_shape[d];
+    }
+    int32_t total = 1;
+    int64_t off = 0;
+    for (int d = 0; d < p->rank; d++) {
+        total *= p->size[d];
+        off += (int64_t)p->begin[d] * in_stride[d];
+    }
+    int32_t idx[EW_MAX_RANK] = {0};
+    for (int32_t n = 0; n < total; n++) {
+        out[n] = in[off];
+        for (int d = p->rank - 1; d >= 0; d--) {
+            idx[d]++;
+            off += in_stride[d];
+            if (idx[d] < p->size[d]) {
+                break;
+            }
+            off -= (int64_t)in_stride[d] * p->size[d];
+            idx[d] = 0;
+        }
+    }
+}
+
+void op_bmm_i8(const bmm_params_t *p, const int8_t *a, const int8_t *b, int8_t *out)
+{
+    for (int32_t bi = 0; bi < p->batch; bi++) {
+        const int8_t *A = a + (int64_t)bi * p->m * p->k;
+        const int8_t *B = b + (int64_t)bi * p->k * p->n;
+        int8_t *O = out + (int64_t)bi * p->m * p->n;
+        for (int32_t i = 0; i < p->m; i++) {
+            for (int32_t j = 0; j < p->n; j++) {
+                int32_t acc = 0;
+                for (int32_t kk = 0; kk < p->k; kk++) {
+                    int32_t av = p->adj_x ? A[(int64_t)kk * p->m + i] : A[(int64_t)i * p->k + kk];
+                    int32_t bv = p->adj_y ? B[(int64_t)j * p->k + kk] : B[(int64_t)kk * p->n + j];
+                    acc += (av - p->zp_a) * (bv - p->zp_b);
+                }
+                int32_t v = tfl_mul_qm(acc, p->mult, p->shift) + p->zp_out;
+                O[(int64_t)i * p->n + j] = tfl_clamp_i8(v, p->act_min, p->act_max);
+            }
+        }
+    }
+}
+
+void op_softmax_i8(const softmax_params_t *p, const int8_t *in, int8_t *out)
+{
+    for (int32_t r = 0; r < p->rows; r++) {
+        const int8_t *x = in + (int64_t)r * p->cols;
+        int8_t *y = out + (int64_t)r * p->cols;
+        int32_t mx = -128;
+        for (int32_t j = 0; j < p->cols; j++) {
+            if (x[j] > mx) mx = x[j];
+        }
+        uint64_t sum = 0;
+        for (int32_t j = 0; j < p->cols; j++) {
+            sum += p->exp_tab[mx - x[j]];
+        }
+        for (int32_t j = 0; j < p->cols; j++) {
+            uint64_t num = (uint64_t)p->exp_tab[mx - x[j]] * (uint64_t)p->out_mul;
+            int32_t q = (int32_t)((2 * num + sum) / (2 * sum));   /* round half up */
+            y[j] = tfl_clamp_i8(q + p->zp_out, -128, 127);
+        }
     }
 }
 
