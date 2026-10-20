@@ -9,4 +9,5 @@ fi
 
 "${VENV}/bin/pip" install --upgrade pip
 "${VENV}/bin/pip" install 'numpy==2.1.3' 'ai-edge-litert==2.2.0'
+"${VENV}/bin/pip" install 'matplotlib==3.11.2'   # analysis figures
 "${VENV}/bin/python" -c 'import numpy; from ai_edge_litert import interpreter; print("ENV_OK", numpy.__version__)'

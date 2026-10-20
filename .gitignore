@@ -39,3 +39,8 @@ coverage/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Personal study material (not part of the submission)
+docs/report/
+docs/presentation/
+tools/report/
