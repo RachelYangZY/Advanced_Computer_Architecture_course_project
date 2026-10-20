@@ -650,3 +650,4 @@ TOTAL instret=1580552607 cycles=1580552607
 CHECK t776 n=1000 mismatches=0 max_diff=0 top1=960 golden_top1=960
 RESULT PASS
 exit=0
+exit=139
