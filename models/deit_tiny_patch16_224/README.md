@@ -5,7 +5,7 @@
 - Architecture: `deit_tiny_patch16_224`
 - Upstream checkpoint: `timm/deit_tiny_patch16_224.fb_in1k`
 - Published size/compute: 5.7M parameters, about 1.3 GMAC at 224 x 224
-- Upstream checkpoint license: Apache-2.0
+- Upstream checkpoint license: Apache-2.0 (see `NOTICE` and `LICENSE-APACHE-2.0.txt` in this directory)
 - Model repository: https://huggingface.co/litert-community/deit_tiny_patch16_224
 - Pinned repository revision: `d0677ea57e9dfe6ed8d083d871562435ae90420a`
 - Artifact path: `model.tflite` (downloaded locally; ignored by Git)
@@ -14,7 +14,7 @@
 
 ## Inspection Result
 
-Inspected with `scripts/inspect_tflite.py` and the Python `tflite` FlatBuffer
+Inspected with `tools/model/inspect_tflite.py` and the Python `tflite` FlatBuffer
 schema package:
 
 - 855 tensors: 677 FLOAT32 and 178 INT32; no INT8 tensors.
@@ -77,24 +77,11 @@ and zero-point review, integer/reference parity for two major operators and a
 complete block, and target implementations for normalization, GELU, and
 softmax. Full DeiT inference remains unapproved until those gates pass.
 
-## Bare-Metal Operator Tile Status
-
-A first bare-metal GEMM tile has been extracted from the W8A8 pilot:
-
-- Input ID: `deit-block0-mlp-fc1-tile-v1`
-- Metadata: `deit_fc1_tile_meta.json`
-- Generated headers: `src/deit_fc1_tile_data.h`, `src/deit_fc1_tile_packed.h`
-- B0/B1/X1 Spike results: recorded in `EXPERIMENTS.md`
-
-This closes the “one major operator tile on target” gate for ISA comparison.
-It does not close accuracy qualification, requantization, a second operator, or
-a complete Transformer block.
-
 ## Host Reference Setup Status
 
 The Ubuntu WSL project venv runs Python 3.12.3 with Torch 2.11.0+cpu,
 torchvision 0.26.0+cpu, LiteRT Torch 0.9.4, and AI Edge Quantizer 0.9.0. The
 source reference, FP32 export, and W8A8 pilot all ran successfully there. The
-standalone `scripts/inspect_tflite.py` additionally requires the `tflite`
+standalone `tools/model/inspect_tflite.py` additionally requires the `tflite`
 FlatBuffer schema package, which is not installed in this venv; the export
 audit above used the LiteRT interpreter instead.

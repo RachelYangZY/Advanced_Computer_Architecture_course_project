@@ -32,16 +32,23 @@ Record at minimum:
 
 When a benchmark is missing, rerun the named configuration with its original
 input-data identifier and settings. Do not use the current default implicitly.
-The expected command interface is:
 
-```text
-run-benchmark --config B0 --input <input-id>
-run-benchmark --config B1 --input <input-id>
-run-benchmark --config X1 --input <input-id>
+Whole model (the headline results; see "Whole Model on Spike" below). Setup is in `README.md`.
+
+```bash
+bash scripts/run/gen_check.sh 0:648            # generated C vs TFLite, every tensor
+bash scripts/run/run_model.sh                  # B0 B1 X1 X1MAC on Spike -> results/model/
+bash scripts/run/instr_mix.sh                  # instruction mix, code size -> results/model/instr_mix.md
+bash scripts/run/verify_isa.sh                 # directed + randomized ISA tests -> results/isa_verify.log
 ```
 
-The commands are a planned interface until the toolchain and benchmark runner
-are added.
+Earlier single-operator tile and chain experiments (B0 at `-O0`, not comparable with the whole-model B0):
+
+```bash
+bash scripts/run/run_deit_op.sh <op>           # one operator tile, B0/B1/X1
+bash scripts/run/run_all_deit_ops.sh           # all extracted operators
+bash scripts/run/run_deit_fc1_configs.sh       # fc1 tile
+```
 
 ## B0 Initial Spike Smoke Test
 
@@ -90,7 +97,7 @@ The first meaningful baseline uses an 8 x 16 activation matrix multiplied by a
 Command:
 
 ```text
-/home/rachelyzy/riscv/bin/spike --isa=RV64IMC -l build/B0/b0.elf > build/B0/trace.log 2>&1
+~/riscv/bin/spike --isa=RV64IMC -l build/B0/b0.elf > build/B0/trace.log 2>&1
 ```
 
 Observed result:

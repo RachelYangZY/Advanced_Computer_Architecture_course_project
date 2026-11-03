@@ -11,6 +11,7 @@ env/
 
 # Generated model and benchmark artifacts
 *.tflite
+!models/deit_tiny_patch16_224/*.tflite
 *.lite
 *.onnx
 *.bin
@@ -19,12 +20,6 @@ env/
 *.map
 *.vcd
 *.fst
-
-# Access-restricted source model and sample image
-models/deit_tiny_patch16_224/source_model.safetensors
-models/deit_tiny_patch16_224/sample.png
-models/deit_tiny_patch16_224/reference_output.json
-models/deit_tiny_patch16_224/fx_quantization_probe.json
 
 # Locally staged ImageNet images (manifests may be committed)
 data/imagenet/images/
