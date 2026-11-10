@@ -74,19 +74,21 @@ execute those inputs.
 
 ## Xqmac8 Semantics
 
-The initial Xqmac8 proposal uses two packed 64-bit source operands and one
-64-bit accumulator input:
+Xqmac8 uses two packed 64-bit source operands and a write-only destination (standard
+two-read-port, one-write-port format; `rd` is never read):
 
 ```text
-rd = rs3 + sum(signed(rs1[8*i +: 8]) * signed(rs2[8*i +: 8])) for i = 0..7
+rd = sum(signed(rs1[8*i +: 8]) * signed(rs2[8*i +: 8])) for i = 0..7
 ```
 
+Software accumulates with one ordinary `add` per instruction (`acc += xqmac8(a, b)`). An earlier
+revision made `rd` also the accumulator input (`rd += ...`), which needs a third register-file read
+port; it was changed to the form above, at the cost of one extra ALU instruction per `xqmac8`.
+
 The byte at bits 7:0 is lane 0, and the byte at bits 63:56 is lane 7. Every
-lane is interpreted as signed INT8. The eight products and the incoming
-accumulator are sign-extended to INT64 before addition. The initial design
-does not saturate and does not use floating point; signed INT64 wraparound is
-the architectural overflow behavior to be confirmed against the chosen RTL
-implementation.
+lane is interpreted as signed INT8. The eight products are sign-extended to INT64 and summed
+(range +-131072, so the sum cannot overflow). The instruction does not saturate and does not use
+floating point.
 
 The software oracle is `src/kernels/xqmac8.c`, tested by `tests/test_xqmac8.c`. The
 custom opcode encoding and Spike decoder integration are implemented in
@@ -148,27 +150,31 @@ Tensor indices used by the extractors were checked against the model's op graph
 ## Xrequant Semantics
 
 ```text
-xrequant rd, rs1, rs2
+xrequant rd, rs1, rs2          # rd is write-only
 
-ctrl = rd
-  zero_point = signed(ctrl[7:0])
-  shift      = unsigned(ctrl[15:8])
-  mode       = ctrl[17:16]
 acc  = signed32(rs1)
-mult = signed32(rs2)
-mode 1/2 (TFLite-exact, shift 0..31):
-  v   = srdhm(acc, mult) = (acc*mult + nudge) / 2^31   # truncating; nudge = 2^30 or 1-2^30 by sign
-  tmp = mode 1: (v + (1 << (shift-1))) >> shift        # round half up   (FULLY_CONNECTED, CONV_2D)
-        mode 2: RoundingDivideByPOT(v, shift)          # half away from zero (BATCH_MATMUL, ADD, ...)
-mode 0 (legacy single rounding): tmp = (acc*mult + (1 << (shift-1))) >> shift
+rs2[31:0]  = mult        (signed32)
+rs2[39:32] = zero_point  (signed)
+rs2[47:40] = shift field
+rs2[49:48] = mode
+mode 1/2 (TFLite-exact): the shift field is TFLite's signed shift, -31..31
+  x   = acc << max(shift, 0)                           # 32-bit wrap, as TFLite
+  v   = srdhm(x, mult) = (x*mult + nudge) / 2^31       # truncating; nudge = 2^30 or 1-2^30 by sign
+  r   = max(-shift, 0)
+  tmp = mode 1: (v + (1 << (r-1))) >> r                # round half up   (FULLY_CONNECTED, CONV_2D)
+        mode 2: RoundingDivideByPOT(v, r)              # half away from zero (BATCH_MATMUL, ADD, ...)
+mode 0 (legacy single rounding, shift field unsigned 0..63): tmp = (acc*mult + (1 << (shift-1))) >> shift
 mode 3: reserved, illegal instruction
 rd   = sext_int8(sat_int8(tmp + zero_point))
 ```
 
 The first design (mode 0 only) rounded once and was not bit-exact against TFLite, which rounds twice:
-the full-model logits differed (940 of 1000). Modes 1 and 2 reproduce TFLite exactly; a TFLite
-multiplier with a left shift is applied to `acc` by software before the instruction. Oracle:
-`src/kernels/xrequant_ref.h`; verification: `scripts/run/verify_isa.sh`.
+the full-model logits differed (940 of 1000). Modes 1 and 2 reproduce TFLite exactly, including
+TFLite multipliers with a left shift. An earlier revision read `rd` as a control word (a third source
+operand); the controls and the multiplier now share `rs2`, so the instruction has two sources and a
+write-only destination. The generated kernels pack `rs2` once per output channel per op call
+(once per op for BATCH_MATMUL), not once per output element. Oracle: `src/kernels/xrequant_ref.h`;
+verification: `scripts/run/verify_isa.sh`.
 
 Encoding (custom-0 family, distinct from Xqmac8 by `funct3`):
 

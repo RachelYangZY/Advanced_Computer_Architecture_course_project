@@ -7,16 +7,20 @@
  * contiguous along i). Zero points are handled by the callers (folded bias or row/column sums).
  *
  * B1 (default): scalar RV64IMC, 2 rows x 4 channels register blocking.
- * X1 (GEMM_XQMAC8): xqmac8, eight MACs per instruction; requires k % 8 == 0 and 8-byte aligned rows.
+ * X1 (GEMM_XQMAC8): xqmac8 (8-lane dot product, one add per instruction to accumulate); requires
+ * k % 8 == 0 and 8-byte aligned rows.
  */
 
 #include <stdint.h>
 
 #ifdef GEMM_XQMAC8
-static inline int64_t xqmac8(int64_t acc, uint64_t a, uint64_t b)
+/* xqmac8 rd, rs1, rs2: rd = dot product of eight int8 lanes (rd is write-only); callers add it
+ * to their running sum. */
+static inline int64_t xqmac8(uint64_t a, uint64_t b)
 {
-    __asm__(".insn r 0x0b, 0, 0x2b, %0, %1, %2" : "+r"(acc) : "r"(a), "r"(b));
-    return acc;
+    int64_t d;
+    __asm__(".insn r 0x0b, 0, 0x2b, %0, %1, %2" : "=r"(d) : "r"(a), "r"(b));
+    return d;
 }
 #endif
 
@@ -38,10 +42,10 @@ static void gemm_nt_rows(const int8_t *x0, const int8_t *x1, const int8_t *w, in
         for (int32_t i = 0; i < kw; i++) {
             uint64_t v0 = a0[i], v1 = a1[i];
             uint64_t u0 = w0[i], u1 = w1[i], u2 = w2[i], u3 = w3[i];
-            s00 = xqmac8(s00, v0, u0); s01 = xqmac8(s01, v0, u1);
-            s02 = xqmac8(s02, v0, u2); s03 = xqmac8(s03, v0, u3);
-            s10 = xqmac8(s10, v1, u0); s11 = xqmac8(s11, v1, u1);
-            s12 = xqmac8(s12, v1, u2); s13 = xqmac8(s13, v1, u3);
+            s00 += xqmac8(v0, u0); s01 += xqmac8(v0, u1);
+            s02 += xqmac8(v0, u2); s03 += xqmac8(v0, u3);
+            s10 += xqmac8(v1, u0); s11 += xqmac8(v1, u1);
+            s12 += xqmac8(v1, u2); s13 += xqmac8(v1, u3);
         }
         acc0[c] = (int32_t)s00; acc0[c + 1] = (int32_t)s01; acc0[c + 2] = (int32_t)s02; acc0[c + 3] = (int32_t)s03;
         if (x1) {
@@ -52,8 +56,8 @@ static void gemm_nt_rows(const int8_t *x0, const int8_t *x1, const int8_t *w, in
         const uint64_t *w0 = (const uint64_t *)(w + (int64_t)c * ldw);
         int64_t s0 = 0, s1 = 0;
         for (int32_t i = 0; i < kw; i++) {
-            s0 = xqmac8(s0, a0[i], w0[i]);
-            s1 = xqmac8(s1, a1[i], w0[i]);
+            s0 += xqmac8(a0[i], w0[i]);
+            s1 += xqmac8(a1[i], w0[i]);
         }
         acc0[c] = (int32_t)s0;
         if (x1) acc1[c] = (int32_t)s1;

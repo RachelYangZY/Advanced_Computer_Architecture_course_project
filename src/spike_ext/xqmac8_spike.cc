@@ -37,8 +37,8 @@ static reg_t xqmac8_execute(processor_t* processor, insn_t insn, reg_t pc)
     state_t* state = processor->get_state();
     reg_t packed_a = state->XPR[insn.rs1()];
     reg_t packed_b = state->XPR[insn.rs2()];
-    int64_t accumulator = static_cast<int64_t>(state->XPR[insn.rd()]);
-    int64_t result = accumulator;
+    // rd is written only: the instruction returns the 8-lane dot product, software accumulates.
+    int64_t result = 0;
 
     for (int lane = 0; lane < 8; ++lane) {
         int shift = lane * 8;
@@ -56,17 +56,27 @@ static reg_t xqmac8_execute(processor_t* processor, insn_t insn, reg_t pc)
 static reg_t xrequant_execute(processor_t* processor, insn_t insn, reg_t pc)
 {
     state_t* state = processor->get_state();
-    reg_t ctrl = state->XPR[insn.rd()];
-    int32_t zero_point = static_cast<int8_t>(ctrl & 0xff);
-    int shift = static_cast<int>((ctrl >> 8) & 0xff);
-    int mode = static_cast<int>((ctrl >> 16) & 0x3);
+    // rd is written only. rs1 = accumulator, rs2 = packed {mode, shift, zero point, multiplier}.
+    reg_t packed = state->XPR[insn.rs2()];
+    int32_t multiplier = static_cast<int32_t>(static_cast<uint32_t>(packed));
+    int32_t zero_point = static_cast<int8_t>(packed >> 32);
+    int shift_field = static_cast<int8_t>(packed >> 40);
+    int mode = static_cast<int>((packed >> 48) & 0x3);
     int32_t accumulator = static_cast<int32_t>(state->XPR[insn.rs1()]);
-    int32_t multiplier = static_cast<int32_t>(state->XPR[insn.rs2()]);
 
-    // mode 0: legacy single rounding; 1: TFLite half-up; 2: TFLite half-away; 3: reserved.
-    // Semantics are defined in src/kernels/xrequant_ref.h.
-    if (mode == 3 || (mode != 0 && shift > 31)) {
+    // mode 0: legacy single rounding (unsigned shift field); 1: TFLite half-up; 2: TFLite half-away;
+    // 3: reserved. For modes 1/2 the shift field is TFLite's signed shift (> 0 shifts the
+    // accumulator left first). Semantics are defined in src/kernels/xrequant_ref.h.
+    if (mode == 3 || (mode != 0 && (shift_field < -31 || shift_field > 31))) {
         throw trap_illegal_instruction(insn.bits());
+    }
+    int shift;
+    if (mode == 0) {
+        shift = static_cast<int>((packed >> 40) & 0xff);
+    } else {
+        int left = shift_field > 0 ? shift_field : 0;
+        shift = shift_field > 0 ? 0 : -shift_field;
+        accumulator = static_cast<int32_t>(static_cast<uint32_t>(accumulator) << left);
     }
     int64_t product;
     if (mode == 0) {

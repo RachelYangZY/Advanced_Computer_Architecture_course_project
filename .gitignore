@@ -21,8 +21,13 @@ env/
 *.vcd
 *.fst
 
+# Access restricted sample image
+models/deit_tiny_patch16_224/sample.png
+
 # Locally staged ImageNet images (manifests may be committed)
 data/imagenet/images/
+data/imagenet_val_subset/*.png
+data/imagenet_calib/*.png
 
 # Build and simulator output
 build/
@@ -34,8 +39,3 @@ coverage/
 .DS_Store
 Thumbs.db
 .vscode/
-
-# Personal study material (not part of the submission)
-docs/report/
-docs/presentation/
-tools/report/

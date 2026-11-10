@@ -16,6 +16,7 @@ Unsupported ops make the generator fail loudly.
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import re
 import sys
@@ -32,6 +33,8 @@ GENERATOR_VERSION = "0.1"
 ALIGN = 8
 EW_MAX_RANK = 5
 RSQRT_REL_BIAS = 1e-5
+RSQRT_TABLES_FILE = Path(__file__).resolve().parent / "data" / "deit_tiny_rsqrt_luts.json"
+RSQRT_TABLES = json.loads(RSQRT_TABLES_FILE.read_text()) if RSQRT_TABLES_FILE.exists() else {}
 
 
 # ----------------------------------------------------------------------------
@@ -381,7 +384,7 @@ class Generator:
             f"  /* op {op.idx} QUANTIZE */"
         )
 
-    def _lut_op(self, op, func, tag: str) -> None:
+    def _lut_op(self, op, func, tag: str, lut_override: np.ndarray | None = None) -> None:
         """INT8->INT8 lookup table op, built like TFLite's PopulateLookupTable (float32)."""
         x, out = op.inputs[0], op.outputs[0]
         self.check_i8(x, out)
@@ -396,6 +399,8 @@ class Generator:
         # Non-finite results convert to INT_MIN on x86 and then saturate to -128.
         resc = np.where(np.isfinite(resc), resc, -(2.0 ** 31)).astype(np.int64)
         lut = np.clip(resc + zp_out, -128, 127).astype(np.int8)
+        if lut_override is not None:
+            lut = np.asarray(lut_override, dtype=np.int8)
         name = self.extra("int8_t", f"lut_{op.idx}", lut)
         n = prod(self.T[x].shape)
         self.calls.append(
@@ -418,7 +423,18 @@ class Generator:
         # reproduces it on all observed (input, output) pairs of 25 RSQRT ops x 3 inputs (0 vs ~4
         # mismatching pairs without it). The true algorithm is unknown (see docs/GENERATOR.md).
         bias = np.float32(1.0 + RSQRT_REL_BIAS)
-        self._lut_op(op, lambda d: (np.float32(1.0) / np.sqrt(d)) * bias, "RSQRT")
+        # Exact tables: TFLite's int8 RSQRT table is not reproducible with any simple float formula
+        # (7 of 6,375 entries of this model's 25 tables differ from 1/sqrt by up to ~1.4e-5 relative, always
+        # upward). tools/eval/rsqrt_extract.py runs each RSQRT op alone through the TFLite interpreter and
+        # stores all 256 outputs; they are used when the op's quantization parameters still match.
+        exact = None
+        tab = RSQRT_TABLES.get(str(op.idx))
+        if tab is not None:
+            s_in, zp_in = scale_zp(self.T[op.inputs[0]])
+            s_out, zp_out = scale_zp(self.T[op.outputs[0]])
+            if (tab["in_scale"], tab["in_zp"], tab["out_scale"], tab["out_zp"]) == (s_in, zp_in, s_out, zp_out):
+                exact = tab["lut"]
+        self._lut_op(op, lambda d: (np.float32(1.0) / np.sqrt(d)) * bias, "RSQRT", lut_override=exact)
 
     def lower_mean(self, op) -> None:
         x, axes_t, out = op.inputs[0], op.inputs[1], op.outputs[0]
@@ -488,7 +504,11 @@ class Generator:
         sa, za = scale_zp(ta)
         sb, zb = scale_zp(tb)
         so, zo = scale_zp(to)
-        mult, shift = quantize_multiplier(float(sa) * float(sb) / float(so))
+        # TFLite forms the product of the two input scales in float32 (GetQuantizedConvolutionMultipler:
+        # `double input_product_scale = input->params.scale * filter->params.scale`), then divides in
+        # double. Using a double product changes the multiplier by a few ulps and flips rare elements
+        # (7 of 11 M BMM outputs on 6 validation images); the float32 product matches all of them.
+        mult, shift = quantize_multiplier(float(np.float32(sa) * np.float32(sb)) / float(so))
         lo, hi = act_range(0)
         self.macs[op.idx] = batch * m * k * n
         self.param_defs.append(
@@ -510,18 +530,22 @@ class Generator:
         tx = self.T[x]
         s_in, _ = scale_zp(tx)
         s_out, zp_out = scale_zp(self.T[out])
-        out_mul = 1.0 / float(s_out)
-        if abs(out_mul - round(out_mul)) > 1e-6:
-            raise NotImplementedError(f"softmax output scale {s_out}: 1/scale not an integer")
-        # exp(-d*scale) in Q31, d = row_max - x. The input scale is the float32 value TFLite stores.
-        tab = np.array([int(math.floor(math.exp(-float(np.float32(s_in)) * d) * (1 << 31) + 0.5))
-                        for d in range(256)], dtype=np.uint32)
+        # TFLite's SoftmaxInt8LUT is float32: table[d] = expf(-in_scale*d), d = row_max - x, then
+        # sequential float32 sum, inv = 1/(sum*out_scale), q = int(e*inv + 0.5f) + zp. The target has
+        # no FPU, so the kernel emulates exactly those float32 operations with integer arithmetic
+        # (op_softmax_i8); only the table (float32 bit patterns) and the output scale are precomputed.
+        f32 = np.float32
+        arg = (f32(-f32(s_in)) * np.arange(256, dtype=np.int32).astype(f32)).astype(f32)
+        tab = np.exp(arg.astype(np.float64)).astype(f32).view(np.uint32)
+        if np.any(((tab >> 23) & 0xFF == 0) & (tab != 0)):
+            raise NotImplementedError("softmax exp table has denormal float32 entries")
         tname = self.extra("uint32_t", f"smx_tab_{op.idx}", tab)
+        out_scale_bits = int(f32(s_out).view(np.uint32))
         cols = tx.shape[-1]
         rows = prod(tx.shape) // cols
         self.param_defs.append(
             f"static const softmax_params_t p_{op.idx} = {{ .rows = {rows}, .cols = {cols}, "
-            f".exp_tab = {tname}, .out_mul = {int(round(out_mul))}, .zp_out = {zp_out} }};"
+            f".exp_f32 = {tname}, .out_scale_bits = {out_scale_bits}u, .zp_out = {zp_out} }};"
         )
         self.calls.append(
             f"    op_softmax_i8(&p_{op.idx}, {self.ptr(x)}, {self.ptr(out)});  /* op {op.idx} SOFTMAX {rows}x{cols} */"
@@ -636,8 +660,8 @@ class Generator:
         tt = []
         ins, outs = set(self.inputs), set(self.outputs)
         checks = sorted(self.produced) if not self.reuse else self.outputs
-        # SOFTMAX is integer-only on the target, TFLite uses float32: allow rare off-by-one near ties.
-        approx = {o for op in self.ops if op.kind in ("SOFTMAX", "BATCH_MATMUL") for o in op.outputs}
+        # SOFTMAX and BATCH_MATMUL are bit-exact too, so no tensor is allowed to differ.
+        approx: set[int] = set()
         approx |= {t for t in self.alias if self.root(t) in approx or self.root(t) in
                    {self.root(a) for a in approx}}
         for t in sorted(set(self.inputs) | set(checks)):

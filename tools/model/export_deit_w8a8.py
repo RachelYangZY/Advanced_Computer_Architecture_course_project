@@ -101,7 +101,16 @@ def build_calibration_set(calibration_dir: Path, model: torch.nn.Module, model_p
         if image_path.suffix.lower() not in {".png", ".jpg", ".jpeg", ".bmp", ".webp"}:
             continue
         image = Image.open(image_path).convert("RGB")
-        tensor = transform(image).unsqueeze(0).numpy().astype(np.float32)
+        if image.size == (224, 224):
+            # Already resized like the accuracy sweep (direct 224x224 bicubic): only normalize,
+            # so calibration sees the same inputs as evaluation (no extra crop).
+            cfg = resolve_model_data_config(model)
+            mean = np.asarray(cfg["mean"], dtype=np.float32).reshape(3, 1, 1)
+            std = np.asarray(cfg["std"], dtype=np.float32).reshape(3, 1, 1)
+            arr = np.asarray(image, dtype=np.float32).transpose(2, 0, 1) / 255.0
+            tensor = ((arr - mean) / std)[None].astype(np.float32)
+        else:
+            tensor = transform(image).unsqueeze(0).numpy().astype(np.float32)
         calibration_samples.append({input_name: tensor})
     if not calibration_samples:
         raise RuntimeError(f"No calibration images were found in {calibration_dir}")

@@ -1,16 +1,14 @@
 #include "int8_gemm_x1.h"
 
-static int32_t xqmac8_dot8(
-    int32_t accumulator,
-    uint64_t packed_a,
-    uint64_t packed_b)
+/* xqmac8 rd, rs1, rs2: rd = dot product of eight int8 lanes (rd is write-only). */
+static int32_t xqmac8_dot8(uint64_t packed_a, uint64_t packed_b)
 {
-    register int64_t result asm("a0") = accumulator;
+    register int64_t result asm("a0");
     register uint64_t source_a asm("a1") = packed_a;
     register uint64_t source_b asm("a2") = packed_b;
 
     asm volatile(".word 0x56c5850b"
-                 : "+r"(result)
+                 : "=r"(result)
                  : "r"(source_a), "r"(source_b));
     return (int32_t)result;
 }
@@ -34,8 +32,7 @@ void int8_gemm_x1(
             int32_t accumulator = 0;
 
             for (int word = 0; word < packed_words; ++word) {
-                accumulator = xqmac8_dot8(
-                    accumulator, activation_row[word], weight_column[word]);
+                accumulator += xqmac8_dot8(activation_row[word], weight_column[word]);
             }
             output[row * columns + column] = accumulator;
         }

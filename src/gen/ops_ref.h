@@ -70,11 +70,12 @@ typedef struct {
     int32_t zp_a, zp_b, zp_out, mult, shift, act_min, act_max;
 } bmm_params_t;
 
-/* SOFTMAX over the last axis (beta == 1, output scale 1/out_mul), table-driven integer math. */
+/* SOFTMAX over the last axis (beta == 1). Bit-exact with TFLite's float32 int8 softmax, computed
+ * with integer-only float32 emulation (no FPU needed). */
 typedef struct {
     int32_t rows, cols;
-    const uint32_t *exp_tab;         /* exp(-d * in_scale) * 2^31, d = row_max - x in [0,255] */
-    int32_t out_mul;                 /* 1 / out_scale (integer, e.g. 256) */
+    const uint32_t *exp_f32;         /* float32 bits of expf(-d * in_scale), d = row_max - x in [0,255] */
+    uint32_t out_scale_bits;         /* float32 bits of the output scale */
     int32_t zp_out;
 } softmax_params_t;
 
@@ -111,6 +112,7 @@ void op_requant_i8(const int8_t *in, int8_t *out, int32_t n, int32_t zp_in, int3
 void op_slice_i8(const slice_params_t *p, const int8_t *in, int8_t *out);
 void op_bmm_i8(const bmm_params_t *p, const int8_t *a, const int8_t *b, int8_t *out);
 void op_softmax_i8(const softmax_params_t *p, const int8_t *in, int8_t *out);
+void op_softmax_i8_slow(const softmax_params_t *p, const int8_t *in, int8_t *out);  /* oracle */
 void op_mean_i8(const mean_params_t *p, const int8_t *in, int8_t *out);
 void op_sqdiff_i8(const ew_params_t *p, const int8_t *a, const int8_t *b, int8_t *out);
 void op_fc_i8(const fc_params_t *p, const int8_t *in, int8_t *out);

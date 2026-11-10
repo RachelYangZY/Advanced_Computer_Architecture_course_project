@@ -11,13 +11,13 @@ int main(void)
         (int64_t)5 * 8 + (int64_t)4 * 7 + (int64_t)3 * 6 +
         (int64_t)-2 * -11 + (int64_t)2 * 4 + (int64_t)1 * -3 +
         (int64_t)127 * 3 + (int64_t)-128 * 2;
-    const int64_t accumulator = -12345;
-    const int64_t result = xqmac8_reference(accumulator, packed_a, packed_b);
+    /* rd is write-only: the result is the dot product alone (no accumulator input). */
+    const int64_t result = xqmac8_reference(packed_a, packed_b);
 
-    if (result != accumulator + expected_dot_product) {
+    if (result != expected_dot_product) {
         fprintf(stderr, "Xqmac8 mismatch: got %lld, expected %lld\n",
                 (long long)result,
-                (long long)(accumulator + expected_dot_product));
+                (long long)expected_dot_product);
         return 1;
     }
 

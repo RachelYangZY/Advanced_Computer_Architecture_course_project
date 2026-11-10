@@ -5,8 +5,8 @@ Term project for Advanced Computer Architecture. We accelerate W8A8 DeiT-Tiny in
 
 | Instruction | What it does |
 |---|---|
-| `xqmac8 rd, rs1, rs2` | `rd += sum(int8(rs1[i]) * int8(rs2[i]))` for 8 packed INT8 lanes: 8 MACs per instruction. `rd` is both accumulator input and result. |
-| `xrequant rd, rs1, rs2` | Fused TFLite-exact requantization: saturating rounding doubling high multiply, rounding right shift, zero-point add, INT8 saturation. `rd` supplies a control word (zero point, shift, mode). |
+| `xqmac8 rd, rs1, rs2` | `rd = sum(int8(rs1[i]) * int8(rs2[i]))` for 8 packed INT8 lanes: 8 MACs per instruction. `rd` is write-only; software adds the result to its running sum (one `add` per instruction). |
+| `xrequant rd, rs1, rs2` | Fused TFLite-exact requantization: saturating rounding doubling high multiply, rounding right shift, zero-point add, INT8 saturation. `rs1` = accumulator; `rs2` packs multiplier, zero point, shift and mode. `rd` is write-only. |
 
 Both live in the RISC-V custom-0 opcode space (`0x0b`, `funct7 = 0x2b`, `funct3` 0 / 1). Semantics and encoding:
 [`DESIGN.md`](DESIGN.md).

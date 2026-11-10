@@ -13,7 +13,7 @@ Per-function retired instructions:
 | int8_gemm_x1 | 0 | 0 | 13065 |
 | main | 4555 | 1451 | 1378 |
 | requantize_i32_to_i8 | 3072 | 960 | 0 |
-
+`
 B1 vs B0: 81.79% fewer (5.49x)
 X1 vs B0: 97.05% fewer (33.85x)
 X1 vs B1: 83.78% fewer (6.16x)

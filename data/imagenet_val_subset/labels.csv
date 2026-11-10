@@ -1,0 +1,1001 @@
+file,label,label_name
+val_00000.png,91,coucal
+val_00001.png,171,Italian greyhound
+val_00002.png,980,volcano
+val_00003.png,218,Welsh springer spaniel
+val_00004.png,19,chickadee
+val_00005.png,658,mitten
+val_00006.png,549,envelope
+val_00007.png,808,sombrero
+val_00008.png,305,dung beetle
+val_00009.png,416,"balance beam, beam"
+val_00010.png,89,"sulphur-crested cockatoo, Kakatoe galerita, Cacatua galerita"
+val_00011.png,793,shower cap
+val_00012.png,712,Petri dish
+val_00013.png,505,coffeepot
+val_00014.png,332,"Angora, Angora rabbit"
+val_00015.png,575,"golfcart, golf cart"
+val_00016.png,986,"yellow lady's slipper, yellow lady-slipper, Cypripedium calceolus, Cypripedium parviflorum"
+val_00017.png,867,"trailer truck, tractor trailer, trucking rig, rig, articulated lorry, semi"
+val_00018.png,116,"chiton, coat-of-mail shell, sea cradle, polyplacophore"
+val_00019.png,817,"sports car, sport car"
+val_00020.png,642,"marimba, xylophone"
+val_00021.png,327,"starfish, sea star"
+val_00022.png,995,earthstar
+val_00023.png,87,"African grey, African gray, Psittacus erithacus"
+val_00024.png,965,burrito
+val_00025.png,267,standard poodle
+val_00026.png,977,"sandbar, sand bar"
+val_00027.png,989,"hip, rose hip, rosehip"
+val_00028.png,120,fiddler crab
+val_00029.png,800,"slot, one-armed bandit"
+val_00030.png,905,window shade
+val_00031.png,124,"crayfish, crawfish, crawdad, crawdaddy"
+val_00032.png,541,"drum, membranophone, tympan"
+val_00033.png,661,Model T
+val_00034.png,112,conch
+val_00035.png,531,digital watch
+val_00036.png,251,"dalmatian, coach dog, carriage dog"
+val_00037.png,495,"china cabinet, china closet"
+val_00038.png,313,"walking stick, walkingstick, stick insect"
+val_00039.png,784,screwdriver
+val_00040.png,261,keeshond
+val_00041.png,973,coral reef
+val_00042.png,725,"pitcher, ewer"
+val_00043.png,535,"disk brake, disc brake"
+val_00044.png,691,oxygen mask
+val_00045.png,70,"harvestman, daddy longlegs, Phalangium opilio"
+val_00046.png,269,"timber wolf, grey wolf, gray wolf, Canis lupus"
+val_00047.png,438,beaker
+val_00048.png,558,"flute, transverse flute"
+val_00049.png,830,stretcher
+val_00050.png,569,"garbage truck, dustcart"
+val_00051.png,129,spoonbill
+val_00052.png,46,"green lizard, Lacerta viridis"
+val_00053.png,60,"night snake, Hypsiglena torquata"
+val_00054.png,766,rotisserie
+val_00055.png,191,"Airedale, Airedale terrier"
+val_00056.png,553,"file, file cabinet, filing cabinet"
+val_00057.png,586,half track
+val_00058.png,119,"rock crab, Cancer irroratus"
+val_00059.png,422,barbell
+val_00060.png,334,"porcupine, hedgehog"
+val_00061.png,13,"junco, snowbird"
+val_00062.png,542,drumstick
+val_00063.png,190,"Sealyham terrier, Sealyham"
+val_00064.png,290,"jaguar, panther, Panthera onca, Felis onca"
+val_00065.png,495,"china cabinet, china closet"
+val_00066.png,826,"stopwatch, stop watch"
+val_00067.png,556,"fire screen, fireguard"
+val_00068.png,664,monitor
+val_00069.png,584,hair slide
+val_00070.png,521,Crock Pot
+val_00071.png,828,strainer
+val_00072.png,593,"harmonica, mouth organ, harp, mouth harp"
+val_00073.png,373,macaque
+val_00074.png,46,"green lizard, Lacerta viridis"
+val_00075.png,409,analog clock
+val_00076.png,692,packet
+val_00077.png,332,"Angora, Angora rabbit"
+val_00078.png,825,stone wall
+val_00079.png,990,"buckeye, horse chestnut, conker"
+val_00080.png,718,pier
+val_00081.png,717,"pickup, pickup truck"
+val_00082.png,195,"Boston bull, Boston terrier"
+val_00083.png,340,zebra
+val_00084.png,627,"limousine, limo"
+val_00085.png,138,bustard
+val_00086.png,835,sundial
+val_00087.png,743,"prison, prison house"
+val_00088.png,623,"letter opener, paper knife, paperknife"
+val_00089.png,998,"ear, spike, capitulum"
+val_00090.png,322,"ringlet, ringlet butterfly"
+val_00091.png,564,four-poster
+val_00092.png,570,"gasmask, respirator, gas helmet"
+val_00093.png,905,window shade
+val_00094.png,875,trombone
+val_00095.png,415,"bakery, bakeshop, bakehouse"
+val_00096.png,764,rifle
+val_00097.png,811,space heater
+val_00098.png,730,"plow, plough"
+val_00099.png,238,Greater Swiss Mountain dog
+val_00100.png,943,"cucumber, cuke"
+val_00101.png,83,"prairie chicken, prairie grouse, prairie fowl"
+val_00102.png,995,earthstar
+val_00103.png,226,briard
+val_00104.png,806,sock
+val_00105.png,356,weasel
+val_00106.png,40,"American chameleon, anole, Anolis carolinensis"
+val_00107.png,543,dumbbell
+val_00108.png,993,gyromitra
+val_00109.png,575,"golfcart, golf cart"
+val_00110.png,828,strainer
+val_00111.png,883,vase
+val_00112.png,633,"loupe, jeweler's loupe"
+val_00113.png,921,"book jacket, dust cover, dust jacket, dust wrapper"
+val_00114.png,515,"cowboy hat, ten-gallon hat"
+val_00115.png,970,alp
+val_00116.png,568,fur coat
+val_00117.png,597,holster
+val_00118.png,98,"red-breasted merganser, Mergus serrator"
+val_00119.png,62,"rock python, rock snake, Python sebae"
+val_00120.png,910,wooden spoon
+val_00121.png,814,speedboat
+val_00122.png,988,acorn
+val_00123.png,155,Shih-Tzu
+val_00124.png,614,kimono
+val_00125.png,561,forklift
+val_00126.png,231,collie
+val_00127.png,215,Brittany spaniel
+val_00128.png,966,red wine
+val_00129.png,311,"grasshopper, hopper"
+val_00130.png,326,"lycaenid, lycaenid butterfly"
+val_00131.png,55,"green snake, grass snake"
+val_00132.png,943,"cucumber, cuke"
+val_00133.png,364,"three-toed sloth, ai, Bradypus tridactylus"
+val_00134.png,988,acorn
+val_00135.png,187,Yorkshire terrier
+val_00136.png,571,"gas pump, gasoline pump, petrol pump, island dispenser"
+val_00137.png,575,"golfcart, golf cart"
+val_00138.png,671,"mountain bike, all-terrain bike, off-roader"
+val_00139.png,70,"harvestman, daddy longlegs, Phalangium opilio"
+val_00140.png,110,"flatworm, platyhelminth"
+val_00141.png,808,sombrero
+val_00142.png,490,"chain mail, ring mail, mail, chain armor, chain armour, ring armor, ring armour"
+val_00143.png,798,"slide rule, slipstick"
+val_00144.png,961,dough
+val_00145.png,266,miniature poodle
+val_00146.png,184,Irish terrier
+val_00147.png,419,Band Aid
+val_00148.png,725,"pitcher, ewer"
+val_00149.png,63,"Indian cobra, Naja naja"
+val_00150.png,971,bubble
+val_00151.png,473,"can opener, tin opener"
+val_00152.png,15,"robin, American robin, Turdus migratorius"
+val_00153.png,832,"stupa, tope"
+val_00154.png,512,"corkscrew, bottle screw"
+val_00155.png,222,kuvasz
+val_00156.png,106,wombat
+val_00157.png,223,schipperke
+val_00158.png,825,stone wall
+val_00159.png,641,maraca
+val_00160.png,684,"ocarina, sweet potato"
+val_00161.png,102,"echidna, spiny anteater, anteater"
+val_00162.png,214,Gordon setter
+val_00163.png,726,"plane, carpenter's plane, woodworking plane"
+val_00164.png,954,banana
+val_00165.png,181,Bedlington terrier
+val_00166.png,813,spatula
+val_00167.png,622,"lens cap, lens cover"
+val_00168.png,863,totem pole
+val_00169.png,665,moped
+val_00170.png,990,"buckeye, horse chestnut, conker"
+val_00171.png,832,"stupa, tope"
+val_00172.png,242,boxer
+val_00173.png,594,harp
+val_00174.png,86,partridge
+val_00175.png,871,trimaran
+val_00176.png,223,schipperke
+val_00177.png,874,"trolleybus, trolley coach, trackless trolley"
+val_00178.png,213,"Irish setter, red setter"
+val_00179.png,315,"mantis, mantid"
+val_00180.png,417,balloon
+val_00181.png,804,soap dispenser
+val_00182.png,126,isopod
+val_00183.png,839,suspension bridge
+val_00184.png,928,"ice cream, icecream"
+val_00185.png,998,"ear, spike, capitulum"
+val_00186.png,50,"American alligator, Alligator mississipiensis"
+val_00187.png,16,bulbul
+val_00188.png,990,"buckeye, horse chestnut, conker"
+val_00189.png,988,acorn
+val_00190.png,771,safe
+val_00191.png,210,German short-haired pointer
+val_00192.png,966,red wine
+val_00193.png,68,"sidewinder, horned rattlesnake, Crotalus cerastes"
+val_00194.png,483,castle
+val_00195.png,376,"proboscis monkey, Nasalis larvatus"
+val_00196.png,580,"greenhouse, nursery, glasshouse"
+val_00197.png,222,kuvasz
+val_00198.png,862,torch
+val_00199.png,830,stretcher
+val_00200.png,895,"warplane, military plane"
+val_00201.png,237,miniature pinscher
+val_00202.png,269,"timber wolf, grey wolf, gray wolf, Canis lupus"
+val_00203.png,96,toucan
+val_00204.png,984,rapeseed
+val_00205.png,403,"aircraft carrier, carrier, flattop, attack aircraft carrier"
+val_00206.png,764,rifle
+val_00207.png,56,"king snake, kingsnake"
+val_00208.png,273,"dingo, warrigal, warragal, Canis dingo"
+val_00209.png,779,school bus
+val_00210.png,141,"redshank, Tringa totanus"
+val_00211.png,187,Yorkshire terrier
+val_00212.png,546,electric guitar
+val_00213.png,774,sandal
+val_00214.png,165,black-and-tan coonhound
+val_00215.png,899,water jug
+val_00216.png,689,overskirt
+val_00217.png,886,vending machine
+val_00218.png,634,"lumbermill, sawmill"
+val_00219.png,860,"tobacco shop, tobacconist shop, tobacconist"
+val_00220.png,392,"rock beauty, Holocanthus tricolor"
+val_00221.png,914,yawl
+val_00222.png,338,"guinea pig, Cavia cobaya"
+val_00223.png,619,"lampshade, lamp shade"
+val_00224.png,711,"perfume, essence"
+val_00225.png,463,"bucket, pail"
+val_00226.png,751,"racer, race car, racing car"
+val_00227.png,72,"black and gold garden spider, Argiope aurantia"
+val_00228.png,311,"grasshopper, hopper"
+val_00229.png,449,boathouse
+val_00230.png,838,"sunscreen, sunblock, sun blocker"
+val_00231.png,450,"bobsled, bobsleigh, bob"
+val_00232.png,399,abaya
+val_00233.png,907,wine bottle
+val_00234.png,234,Rottweiler
+val_00235.png,392,"rock beauty, Holocanthus tricolor"
+val_00236.png,71,scorpion
+val_00237.png,249,"malamute, malemute, Alaskan malamute"
+val_00238.png,455,bottlecap
+val_00239.png,499,"cleaver, meat cleaver, chopper"
+val_00240.png,938,cauliflower
+val_00241.png,641,maraca
+val_00242.png,83,"prairie chicken, prairie grouse, prairie fowl"
+val_00243.png,704,parking meter
+val_00244.png,785,"seat belt, seatbelt"
+val_00245.png,582,"grocery store, grocery, food market, market"
+val_00246.png,115,"sea slug, nudibranch"
+val_00247.png,157,papillon
+val_00248.png,154,"Pekinese, Pekingese, Peke"
+val_00249.png,590,"hand-held computer, hand-held microcomputer"
+val_00250.png,875,trombone
+val_00251.png,914,yawl
+val_00252.png,761,"remote control, remote"
+val_00253.png,395,"gar, garfish, garpike, billfish, Lepisosteus osseus"
+val_00254.png,572,goblet
+val_00255.png,413,"assault rifle, assault gun"
+val_00256.png,837,"sunglasses, dark glasses, shades"
+val_00257.png,482,cassette player
+val_00258.png,228,komondor
+val_00259.png,683,"oboe, hautboy, hautbois"
+val_00260.png,941,acorn squash
+val_00261.png,650,"microphone, mike"
+val_00262.png,971,bubble
+val_00263.png,413,"assault rifle, assault gun"
+val_00264.png,88,macaw
+val_00265.png,488,chain
+val_00266.png,195,"Boston bull, Boston terrier"
+val_00267.png,550,espresso maker
+val_00268.png,711,"perfume, essence"
+val_00269.png,44,alligator lizard
+val_00270.png,242,boxer
+val_00271.png,554,fireboat
+val_00272.png,698,palace
+val_00273.png,646,"maze, labyrinth"
+val_00274.png,292,"tiger, Panthera tigris"
+val_00275.png,888,viaduct
+val_00276.png,161,"basset, basset hound"
+val_00277.png,66,"horned viper, cerastes, sand viper, horned asp, Cerastes cornutus"
+val_00278.png,136,"European gallinule, Porphyrio porphyrio"
+val_00279.png,191,"Airedale, Airedale terrier"
+val_00280.png,88,macaw
+val_00281.png,357,mink
+val_00282.png,424,barbershop
+val_00283.png,821,steel arch bridge
+val_00284.png,758,reel
+val_00285.png,194,"Dandie Dinmont, Dandie Dinmont terrier"
+val_00286.png,673,"mouse, computer mouse"
+val_00287.png,828,strainer
+val_00288.png,703,park bench
+val_00289.png,541,"drum, membranophone, tympan"
+val_00290.png,999,"toilet tissue, toilet paper, bathroom tissue"
+val_00291.png,216,"clumber, clumber spaniel"
+val_00292.png,926,"hot pot, hotpot"
+val_00293.png,2,"great white shark, white shark, man-eater, man-eating shark, Carcharodon carcharias"
+val_00294.png,33,"loggerhead, loggerhead turtle, Caretta caretta"
+val_00295.png,61,"boa constrictor, Constrictor constrictor"
+val_00296.png,699,"panpipe, pandean pipe, syrinx"
+val_00297.png,451,"bolo tie, bolo, bola tie, bola"
+val_00298.png,756,rain barrel
+val_00299.png,837,"sunglasses, dark glasses, shades"
+val_00300.png,96,toucan
+val_00301.png,628,"liner, ocean liner"
+val_00302.png,530,digital clock
+val_00303.png,982,"groom, bridegroom"
+val_00304.png,732,"Polaroid camera, Polaroid Land camera"
+val_00305.png,370,"guenon, guenon monkey"
+val_00306.png,334,"porcupine, hedgehog"
+val_00307.png,879,umbrella
+val_00308.png,0,"tench, Tinca tinca"
+val_00309.png,267,standard poodle
+val_00310.png,708,"pedestal, plinth, footstall"
+val_00311.png,935,mashed potato
+val_00312.png,264,"Cardigan, Cardigan Welsh corgi"
+val_00313.png,292,"tiger, Panthera tigris"
+val_00314.png,573,go-kart
+val_00315.png,861,toilet seat
+val_00316.png,91,coucal
+val_00317.png,179,"Staffordshire bullterrier, Staffordshire bull terrier"
+val_00318.png,965,burrito
+val_00319.png,270,"white wolf, Arctic wolf, Canis lupus tundrarum"
+val_00320.png,29,"axolotl, mud puppy, Ambystoma mexicanum"
+val_00321.png,850,"teddy, teddy bear"
+val_00322.png,608,"jean, blue jean, denim"
+val_00323.png,4,"hammerhead, hammerhead shark"
+val_00324.png,220,Sussex spaniel
+val_00325.png,113,snail
+val_00326.png,424,barbershop
+val_00327.png,405,"airship, dirigible"
+val_00328.png,116,"chiton, coat-of-mail shell, sea cradle, polyplacophore"
+val_00329.png,222,kuvasz
+val_00330.png,159,Rhodesian ridgeback
+val_00331.png,447,"binoculars, field glasses, opera glasses"
+val_00332.png,809,soup bowl
+val_00333.png,237,miniature pinscher
+val_00334.png,975,"lakeside, lakeshore"
+val_00335.png,104,"wallaby, brush kangaroo"
+val_00336.png,13,"junco, snowbird"
+val_00337.png,897,"washer, automatic washer, washing machine"
+val_00338.png,280,"grey fox, gray fox, Urocyon cinereoargenteus"
+val_00339.png,388,"giant panda, panda, panda bear, coon bear, Ailuropoda melanoleuca"
+val_00340.png,617,"lab coat, laboratory coat"
+val_00341.png,538,dome
+val_00342.png,55,"green snake, grass snake"
+val_00343.png,780,schooner
+val_00344.png,888,viaduct
+val_00345.png,834,"suit, suit of clothes"
+val_00346.png,216,"clumber, clumber spaniel"
+val_00347.png,720,pill bottle
+val_00348.png,180,"American Staffordshire terrier, Staffordshire terrier, American pit bull terrier, pit bull terrier"
+val_00349.png,238,Greater Swiss Mountain dog
+val_00350.png,164,bluetick
+val_00351.png,485,CD player
+val_00352.png,640,manhole cover
+val_00353.png,481,cassette
+val_00354.png,492,chest
+val_00355.png,422,barbell
+val_00356.png,173,"Ibizan hound, Ibizan Podenco"
+val_00357.png,657,missile
+val_00358.png,941,acorn squash
+val_00359.png,907,wine bottle
+val_00360.png,215,Brittany spaniel
+val_00361.png,686,oil filter
+val_00362.png,680,nipple
+val_00363.png,16,bulbul
+val_00364.png,210,German short-haired pointer
+val_00365.png,700,paper towel
+val_00366.png,616,knot
+val_00367.png,728,plastic bag
+val_00368.png,509,"confectionery, confectionary, candy store"
+val_00369.png,738,"pot, flowerpot"
+val_00370.png,252,"affenpinscher, monkey pinscher, monkey dog"
+val_00371.png,595,"harvester, reaper"
+val_00372.png,4,"hammerhead, hammerhead shark"
+val_00373.png,808,sombrero
+val_00374.png,809,soup bowl
+val_00375.png,782,"screen, CRT screen"
+val_00376.png,645,maypole
+val_00377.png,9,"ostrich, Struthio camelus"
+val_00378.png,421,"bannister, banister, balustrade, balusters, handrail"
+val_00379.png,699,"panpipe, pandean pipe, syrinx"
+val_00380.png,514,cowboy boot
+val_00381.png,228,komondor
+val_00382.png,520,"crib, cot"
+val_00383.png,997,bolete
+val_00384.png,565,freight car
+val_00385.png,180,"American Staffordshire terrier, Staffordshire terrier, American pit bull terrier, pit bull terrier"
+val_00386.png,302,"ground beetle, carabid beetle"
+val_00387.png,319,"dragonfly, darning needle, devil's darning needle, sewing needle, snake feeder, snake doctor, mosquito hawk, skeeter hawk"
+val_00388.png,707,"pay-phone, pay-station"
+val_00389.png,293,"cheetah, chetah, Acinonyx jubatus"
+val_00390.png,809,soup bowl
+val_00391.png,464,buckle
+val_00392.png,467,"butcher shop, meat market"
+val_00393.png,379,"howler monkey, howler"
+val_00394.png,37,"box turtle, box tortoise"
+val_00395.png,187,Yorkshire terrier
+val_00396.png,202,soft-coated wheaten terrier
+val_00397.png,410,"apiary, bee house"
+val_00398.png,301,"ladybug, ladybeetle, lady beetle, ladybird, ladybird beetle"
+val_00399.png,718,pier
+val_00400.png,956,custard apple
+val_00401.png,558,"flute, transverse flute"
+val_00402.png,833,"submarine, pigboat, sub, U-boat"
+val_00403.png,770,running shoe
+val_00404.png,795,ski
+val_00405.png,48,"Komodo dragon, Komodo lizard, dragon lizard, giant lizard, Varanus komodoensis"
+val_00406.png,565,freight car
+val_00407.png,110,"flatworm, platyhelminth"
+val_00408.png,927,trifle
+val_00409.png,740,power drill
+val_00410.png,250,Siberian husky
+val_00411.png,549,envelope
+val_00412.png,844,"switch, electric switch, electrical switch"
+val_00413.png,772,safety pin
+val_00414.png,385,"Indian elephant, Elephas maximus"
+val_00415.png,605,iPod
+val_00416.png,487,"cellular telephone, cellular phone, cellphone, cell, mobile phone"
+val_00417.png,912,"worm fence, snake fence, snake-rail fence, Virginia fence"
+val_00418.png,834,"suit, suit of clothes"
+val_00419.png,755,"radio telescope, radio reflector"
+val_00420.png,979,"valley, vale"
+val_00421.png,220,Sussex spaniel
+val_00422.png,869,trench coat
+val_00423.png,819,stage
+val_00424.png,996,"hen-of-the-woods, hen of the woods, Polyporus frondosus, Grifola frondosa"
+val_00425.png,947,mushroom
+val_00426.png,176,"Saluki, gazelle hound"
+val_00427.png,413,"assault rifle, assault gun"
+val_00428.png,873,triumphal arch
+val_00429.png,964,potpie
+val_00430.png,189,Lakeland terrier
+val_00431.png,889,"violin, fiddle"
+val_00432.png,181,Bedlington terrier
+val_00433.png,546,electric guitar
+val_00434.png,451,"bolo tie, bolo, bola tie, bola"
+val_00435.png,136,"European gallinule, Porphyrio porphyrio"
+val_00436.png,973,coral reef
+val_00437.png,273,"dingo, warrigal, warragal, Canis dingo"
+val_00438.png,821,steel arch bridge
+val_00439.png,81,ptarmigan
+val_00440.png,298,mongoose
+val_00441.png,999,"toilet tissue, toilet paper, bathroom tissue"
+val_00442.png,257,Great Pyrenees
+val_00443.png,68,"sidewinder, horned rattlesnake, Crotalus cerastes"
+val_00444.png,649,"megalith, megalithic structure"
+val_00445.png,513,"cornet, horn, trumpet, trump"
+val_00446.png,683,"oboe, hautboy, hautbois"
+val_00447.png,902,whistle
+val_00448.png,406,altar
+val_00449.png,992,agaric
+val_00450.png,417,balloon
+val_00451.png,325,"sulphur butterfly, sulfur butterfly"
+val_00452.png,29,"axolotl, mud puppy, Ambystoma mexicanum"
+val_00453.png,555,"fire engine, fire truck"
+val_00454.png,103,"platypus, duckbill, duckbilled platypus, duck-billed platypus, Ornithorhynchus anatinus"
+val_00455.png,994,"stinkhorn, carrion fungus"
+val_00456.png,350,"ibex, Capra ibex"
+val_00457.png,934,"hotdog, hot dog, red hot"
+val_00458.png,998,"ear, spike, capitulum"
+val_00459.png,402,acoustic guitar
+val_00460.png,51,triceratops
+val_00461.png,486,"cello, violoncello"
+val_00462.png,113,snail
+val_00463.png,789,shoji
+val_00464.png,437,"beacon, lighthouse, beacon light, pharos"
+val_00465.png,878,typewriter keyboard
+val_00466.png,927,trifle
+val_00467.png,101,tusker
+val_00468.png,314,"cockroach, roach"
+val_00469.png,440,beer bottle
+val_00470.png,143,"oystercatcher, oyster catcher"
+val_00471.png,672,mountain tent
+val_00472.png,577,"gong, tam-tam"
+val_00473.png,561,forklift
+val_00474.png,448,birdhouse
+val_00475.png,798,"slide rule, slipstick"
+val_00476.png,883,vase
+val_00477.png,336,marmot
+val_00478.png,489,chainlink fence
+val_00479.png,790,shopping basket
+val_00480.png,298,mongoose
+val_00481.png,692,packet
+val_00482.png,923,plate
+val_00483.png,31,"tree frog, tree-frog"
+val_00484.png,690,oxcart
+val_00485.png,229,"Old English sheepdog, bobtail"
+val_00486.png,165,black-and-tan coonhound
+val_00487.png,594,harp
+val_00488.png,976,"promontory, headland, head, foreland"
+val_00489.png,815,"spider web, spider's web"
+val_00490.png,204,"Lhasa, Lhasa apso"
+val_00491.png,589,"hand blower, blow dryer, blow drier, hair dryer, hair drier"
+val_00492.png,220,Sussex spaniel
+val_00493.png,364,"three-toed sloth, ai, Bradypus tridactylus"
+val_00494.png,930,French loaf
+val_00495.png,285,Egyptian cat
+val_00496.png,111,"nematode, nematode worm, roundworm"
+val_00497.png,242,boxer
+val_00498.png,245,French bulldog
+val_00499.png,262,Brabancon griffon
+val_00500.png,996,"hen-of-the-woods, hen of the woods, Polyporus frondosus, Grifola frondosa"
+val_00501.png,604,hourglass
+val_00502.png,539,"doormat, welcome mat"
+val_00503.png,951,lemon
+val_00504.png,365,"orangutan, orang, orangutang, Pongo pygmaeus"
+val_00505.png,880,"unicycle, monocycle"
+val_00506.png,640,manhole cover
+val_00507.png,340,zebra
+val_00508.png,887,vestment
+val_00509.png,145,"king penguin, Aptenodytes patagonica"
+val_00510.png,983,scuba diver
+val_00511.png,820,steam locomotive
+val_00512.png,156,Blenheim spaniel
+val_00513.png,211,"vizsla, Hungarian pointer"
+val_00514.png,969,eggnog
+val_00515.png,773,"saltshaker, salt shaker"
+val_00516.png,136,"European gallinule, Porphyrio porphyrio"
+val_00517.png,875,trombone
+val_00518.png,990,"buckeye, horse chestnut, conker"
+val_00519.png,765,"rocking chair, rocker"
+val_00520.png,253,basenji
+val_00521.png,76,tarantula
+val_00522.png,184,Irish terrier
+val_00523.png,941,acorn squash
+val_00524.png,371,"patas, hussar monkey, Erythrocebus patas"
+val_00525.png,380,"titi, titi monkey"
+val_00526.png,534,"dishwasher, dish washer, dishwashing machine"
+val_00527.png,94,hummingbird
+val_00528.png,266,miniature poodle
+val_00529.png,666,mortar
+val_00530.png,397,"puffer, pufferfish, blowfish, globefish"
+val_00531.png,131,"little blue heron, Egretta caerulea"
+val_00532.png,194,"Dandie Dinmont, Dandie Dinmont terrier"
+val_00533.png,415,"bakery, bakeshop, bakehouse"
+val_00534.png,808,sombrero
+val_00535.png,619,"lampshade, lamp shade"
+val_00536.png,417,balloon
+val_00537.png,125,hermit crab
+val_00538.png,682,obelisk
+val_00539.png,559,folding chair
+val_00540.png,596,hatchet
+val_00541.png,777,scabbard
+val_00542.png,895,"warplane, military plane"
+val_00543.png,566,"French horn, horn"
+val_00544.png,316,"cicada, cicala"
+val_00545.png,932,pretzel
+val_00546.png,102,"echidna, spiny anteater, anteater"
+val_00547.png,165,black-and-tan coonhound
+val_00548.png,600,"hook, claw"
+val_00549.png,280,"grey fox, gray fox, Urocyon cinereoargenteus"
+val_00550.png,397,"puffer, pufferfish, blowfish, globefish"
+val_00551.png,74,"garden spider, Aranea diademata"
+val_00552.png,933,cheeseburger
+val_00553.png,429,baseball
+val_00554.png,351,hartebeest
+val_00555.png,43,"frilled lizard, Chlamydosaurus kingi"
+val_00556.png,752,"racket, racquet"
+val_00557.png,222,kuvasz
+val_00558.png,482,cassette player
+val_00559.png,64,green mamba
+val_00560.png,27,eft
+val_00561.png,820,steam locomotive
+val_00562.png,855,thimble
+val_00563.png,283,Persian cat
+val_00564.png,885,velvet
+val_00565.png,135,"limpkin, Aramus pictus"
+val_00566.png,839,suspension bridge
+val_00567.png,666,mortar
+val_00568.png,622,"lens cap, lens cover"
+val_00569.png,417,balloon
+val_00570.png,681,"notebook, notebook computer"
+val_00571.png,179,"Staffordshire bullterrier, Staffordshire bull terrier"
+val_00572.png,416,"balance beam, beam"
+val_00573.png,66,"horned viper, cerastes, sand viper, horned asp, Cerastes cornutus"
+val_00574.png,522,croquet ball
+val_00575.png,733,pole
+val_00576.png,374,langur
+val_00577.png,234,Rottweiler
+val_00578.png,175,"otterhound, otter hound"
+val_00579.png,683,"oboe, hautboy, hautbois"
+val_00580.png,479,car wheel
+val_00581.png,391,"coho, cohoe, coho salmon, blue jack, silver salmon, Oncorhynchus kisutch"
+val_00582.png,998,"ear, spike, capitulum"
+val_00583.png,494,"chime, bell, gong"
+val_00584.png,352,"impala, Aepyceros melampus"
+val_00585.png,244,Tibetan mastiff
+val_00586.png,976,"promontory, headland, head, foreland"
+val_00587.png,30,"bullfrog, Rana catesbeiana"
+val_00588.png,406,altar
+val_00589.png,221,Irish water spaniel
+val_00590.png,16,bulbul
+val_00591.png,546,electric guitar
+val_00592.png,255,Leonberg
+val_00593.png,611,jigsaw puzzle
+val_00594.png,564,four-poster
+val_00595.png,442,"bell cote, bell cot"
+val_00596.png,721,pillow
+val_00597.png,738,"pot, flowerpot"
+val_00598.png,105,"koala, koala bear, kangaroo bear, native bear, Phascolarctos cinereus"
+val_00599.png,914,yawl
+val_00600.png,454,"bookshop, bookstore, bookstall"
+val_00601.png,357,mink
+val_00602.png,75,"black widow, Latrodectus mactans"
+val_00603.png,381,"spider monkey, Ateles geoffroyi"
+val_00604.png,940,spaghetti squash
+val_00605.png,474,cardigan
+val_00606.png,424,barbershop
+val_00607.png,842,"swimming trunks, bathing trunks"
+val_00608.png,809,soup bowl
+val_00609.png,597,holster
+val_00610.png,881,"upright, upright piano"
+val_00611.png,947,mushroom
+val_00612.png,524,cuirass
+val_00613.png,111,"nematode, nematode worm, roundworm"
+val_00614.png,977,"sandbar, sand bar"
+val_00615.png,146,"albatross, mollymawk"
+val_00616.png,564,four-poster
+val_00617.png,401,"accordion, piano accordion, squeeze box"
+val_00618.png,629,"lipstick, lip rouge"
+val_00619.png,386,"African elephant, Loxodonta africana"
+val_00620.png,960,"chocolate sauce, chocolate syrup"
+val_00621.png,945,bell pepper
+val_00622.png,451,"bolo tie, bolo, bola tie, bola"
+val_00623.png,96,toucan
+val_00624.png,38,banded gecko
+val_00625.png,559,folding chair
+val_00626.png,787,"shield, buckler"
+val_00627.png,87,"African grey, African gray, Psittacus erithacus"
+val_00628.png,254,"pug, pug-dog"
+val_00629.png,549,envelope
+val_00630.png,957,pomegranate
+val_00631.png,2,"great white shark, white shark, man-eater, man-eating shark, Carcharodon carcharias"
+val_00632.png,360,otter
+val_00633.png,375,"colobus, colobus monkey"
+val_00634.png,461,"breastplate, aegis, egis"
+val_00635.png,784,screwdriver
+val_00636.png,992,agaric
+val_00637.png,194,"Dandie Dinmont, Dandie Dinmont terrier"
+val_00638.png,244,Tibetan mastiff
+val_00639.png,384,"indri, indris, Indri indri, Indri brevicaudatus"
+val_00640.png,728,plastic bag
+val_00641.png,908,wing
+val_00642.png,918,"crossword puzzle, crossword"
+val_00643.png,875,trombone
+val_00644.png,289,"snow leopard, ounce, Panthera uncia"
+val_00645.png,960,"chocolate sauce, chocolate syrup"
+val_00646.png,303,"long-horned beetle, longicorn, longicorn beetle"
+val_00647.png,277,"red fox, Vulpes vulpes"
+val_00648.png,568,fur coat
+val_00649.png,889,"violin, fiddle"
+val_00650.png,470,"candle, taper, wax light"
+val_00651.png,129,spoonbill
+val_00652.png,153,"Maltese dog, Maltese terrier, Maltese"
+val_00653.png,240,Appenzeller
+val_00654.png,437,"beacon, lighthouse, beacon light, pharos"
+val_00655.png,209,Chesapeake Bay retriever
+val_00656.png,363,armadillo
+val_00657.png,633,"loupe, jeweler's loupe"
+val_00658.png,605,iPod
+val_00659.png,541,"drum, membranophone, tympan"
+val_00660.png,631,lotion
+val_00661.png,749,"quill, quill pen"
+val_00662.png,552,"feather boa, boa"
+val_00663.png,861,toilet seat
+val_00664.png,672,mountain tent
+val_00665.png,438,beaker
+val_00666.png,555,"fire engine, fire truck"
+val_00667.png,997,bolete
+val_00668.png,946,cardoon
+val_00669.png,200,"Tibetan terrier, chrysanthemum dog"
+val_00670.png,950,orange
+val_00671.png,378,"capuchin, ringtail, Cebus capucinus"
+val_00672.png,388,"giant panda, panda, panda bear, coon bear, Ailuropoda melanoleuca"
+val_00673.png,616,knot
+val_00674.png,579,"grand piano, grand"
+val_00675.png,297,"sloth bear, Melursus ursinus, Ursus ursinus"
+val_00676.png,73,"barn spider, Araneus cavaticus"
+val_00677.png,507,combination lock
+val_00678.png,667,mortarboard
+val_00679.png,630,Loafer
+val_00680.png,100,"black swan, Cygnus atratus"
+val_00681.png,686,oil filter
+val_00682.png,212,English setter
+val_00683.png,510,"container ship, containership, container vessel"
+val_00684.png,83,"prairie chicken, prairie grouse, prairie fowl"
+val_00685.png,536,"dock, dockage, docking facility"
+val_00686.png,587,hammer
+val_00687.png,516,cradle
+val_00688.png,243,bull mastiff
+val_00689.png,444,"bicycle-built-for-two, tandem bicycle, tandem"
+val_00690.png,354,"Arabian camel, dromedary, Camelus dromedarius"
+val_00691.png,286,"cougar, puma, catamount, mountain lion, painter, panther, Felis concolor"
+val_00692.png,272,"coyote, prairie wolf, brush wolf, Canis latrans"
+val_00693.png,512,"corkscrew, bottle screw"
+val_00694.png,650,"microphone, mike"
+val_00695.png,529,"diaper, nappy, napkin"
+val_00696.png,780,schooner
+val_00697.png,933,cheeseburger
+val_00698.png,762,"restaurant, eating house, eating place, eatery"
+val_00699.png,494,"chime, bell, gong"
+val_00700.png,16,bulbul
+val_00701.png,577,"gong, tam-tam"
+val_00702.png,31,"tree frog, tree-frog"
+val_00703.png,372,baboon
+val_00704.png,517,crane2
+val_00705.png,123,"spiny lobster, langouste, rock lobster, crawfish, crayfish, sea crawfish"
+val_00706.png,532,"dining table, board"
+val_00707.png,805,soccer ball
+val_00708.png,709,"pencil box, pencil case"
+val_00709.png,177,"Scottish deerhound, deerhound"
+val_00710.png,411,apron
+val_00711.png,372,baboon
+val_00712.png,348,"ram, tup"
+val_00713.png,474,cardigan
+val_00714.png,87,"African grey, African gray, Psittacus erithacus"
+val_00715.png,833,"submarine, pigboat, sub, U-boat"
+val_00716.png,234,Rottweiler
+val_00717.png,342,"wild boar, boar, Sus scrofa"
+val_00718.png,126,isopod
+val_00719.png,618,ladle
+val_00720.png,469,"caldron, cauldron"
+val_00721.png,156,Blenheim spaniel
+val_00722.png,949,strawberry
+val_00723.png,166,"Walker hound, Walker foxhound"
+val_00724.png,783,screw
+val_00725.png,305,dung beetle
+val_00726.png,187,Yorkshire terrier
+val_00727.png,466,"bullet train, bullet"
+val_00728.png,421,"bannister, banister, balustrade, balusters, handrail"
+val_00729.png,662,modem
+val_00730.png,41,"whiptail, whiptail lizard"
+val_00731.png,867,"trailer truck, tractor trailer, trucking rig, rig, articulated lorry, semi"
+val_00732.png,206,curly-coated retriever
+val_00733.png,204,"Lhasa, Lhasa apso"
+val_00734.png,928,"ice cream, icecream"
+val_00735.png,377,marmoset
+val_00736.png,131,"little blue heron, Egretta caerulea"
+val_00737.png,426,barometer
+val_00738.png,661,Model T
+val_00739.png,564,four-poster
+val_00740.png,472,canoe
+val_00741.png,596,hatchet
+val_00742.png,348,"ram, tup"
+val_00743.png,440,beer bottle
+val_00744.png,88,macaw
+val_00745.png,450,"bobsled, bobsleigh, bob"
+val_00746.png,606,"iron, smoothing iron"
+val_00747.png,882,"vacuum, vacuum cleaner"
+val_00748.png,436,"beach wagon, station wagon, wagon, estate car, beach waggon, station waggon, waggon"
+val_00749.png,805,soccer ball
+val_00750.png,52,"thunder snake, worm snake, Carphophis amoenus"
+val_00751.png,867,"trailer truck, tractor trailer, trucking rig, rig, articulated lorry, semi"
+val_00752.png,741,"prayer rug, prayer mat"
+val_00753.png,44,alligator lizard
+val_00754.png,623,"letter opener, paper knife, paperknife"
+val_00755.png,674,mousetrap
+val_00756.png,516,cradle
+val_00757.png,953,"pineapple, ananas"
+val_00758.png,373,macaque
+val_00759.png,595,"harvester, reaper"
+val_00760.png,962,"meat loaf, meatloaf"
+val_00761.png,920,"traffic light, traffic signal, stoplight"
+val_00762.png,797,sleeping bag
+val_00763.png,168,redbone
+val_00764.png,350,"ibex, Capra ibex"
+val_00765.png,294,"brown bear, bruin, Ursus arctos"
+val_00766.png,879,umbrella
+val_00767.png,979,"valley, vale"
+val_00768.png,566,"French horn, horn"
+val_00769.png,106,wombat
+val_00770.png,208,Labrador retriever
+val_00771.png,766,rotisserie
+val_00772.png,823,stethoscope
+val_00773.png,284,"Siamese cat, Siamese"
+val_00774.png,915,yurt
+val_00775.png,843,swing
+val_00776.png,920,"traffic light, traffic signal, stoplight"
+val_00777.png,269,"timber wolf, grey wolf, gray wolf, Canis lupus"
+val_00778.png,602,"horizontal bar, high bar"
+val_00779.png,145,"king penguin, Aptenodytes patagonica"
+val_00780.png,54,"hognose snake, puff adder, sand viper"
+val_00781.png,338,"guinea pig, Cavia cobaya"
+val_00782.png,290,"jaguar, panther, Panthera onca, Felis onca"
+val_00783.png,517,crane2
+val_00784.png,121,"king crab, Alaska crab, Alaskan king crab, Alaska king crab, Paralithodes camtschatica"
+val_00785.png,921,"book jacket, dust cover, dust jacket, dust wrapper"
+val_00786.png,451,"bolo tie, bolo, bola tie, bola"
+val_00787.png,817,"sports car, sport car"
+val_00788.png,932,pretzel
+val_00789.png,347,bison
+val_00790.png,634,"lumbermill, sawmill"
+val_00791.png,124,"crayfish, crawfish, crawdad, crawdaddy"
+val_00792.png,34,"leatherback turtle, leatherback, leathery turtle, Dermochelys coriacea"
+val_00793.png,560,football helmet
+val_00794.png,581,"grille, radiator grille"
+val_00795.png,410,"apiary, bee house"
+val_00796.png,270,"white wolf, Arctic wolf, Canis lupus tundrarum"
+val_00797.png,71,scorpion
+val_00798.png,515,"cowboy hat, ten-gallon hat"
+val_00799.png,580,"greenhouse, nursery, glasshouse"
+val_00800.png,270,"white wolf, Arctic wolf, Canis lupus tundrarum"
+val_00801.png,847,"tank, army tank, armored combat vehicle, armoured combat vehicle"
+val_00802.png,994,"stinkhorn, carrion fungus"
+val_00803.png,493,"chiffonier, commode"
+val_00804.png,278,"kit fox, Vulpes macrotis"
+val_00805.png,957,pomegranate
+val_00806.png,80,black grouse
+val_00807.png,190,"Sealyham terrier, Sealyham"
+val_00808.png,896,"washbasin, handbasin, washbowl, lavabo, wash-hand basin"
+val_00809.png,54,"hognose snake, puff adder, sand viper"
+val_00810.png,347,bison
+val_00811.png,239,Bernese mountain dog
+val_00812.png,526,desk
+val_00813.png,190,"Sealyham terrier, Sealyham"
+val_00814.png,74,"garden spider, Aranea diademata"
+val_00815.png,723,pinwheel
+val_00816.png,953,"pineapple, ananas"
+val_00817.png,451,"bolo tie, bolo, bola tie, bola"
+val_00818.png,648,"medicine chest, medicine cabinet"
+val_00819.png,802,snowmobile
+val_00820.png,165,black-and-tan coonhound
+val_00821.png,301,"ladybug, ladybeetle, lady beetle, ladybird, ladybird beetle"
+val_00822.png,3,"tiger shark, Galeocerdo cuvieri"
+val_00823.png,383,"Madagascar cat, ring-tailed lemur, Lemur catta"
+val_00824.png,221,Irish water spaniel
+val_00825.png,1,"goldfish, Carassius auratus"
+val_00826.png,300,tiger beetle
+val_00827.png,29,"axolotl, mud puppy, Ambystoma mexicanum"
+val_00828.png,565,freight car
+val_00829.png,356,weasel
+val_00830.png,556,"fire screen, fireguard"
+val_00831.png,700,paper towel
+val_00832.png,596,hatchet
+val_00833.png,472,canoe
+val_00834.png,142,dowitcher
+val_00835.png,35,mud turtle
+val_00836.png,652,military uniform
+val_00837.png,935,mashed potato
+val_00838.png,495,"china cabinet, china closet"
+val_00839.png,942,butternut squash
+val_00840.png,444,"bicycle-built-for-two, tandem bicycle, tandem"
+val_00841.png,566,"French horn, horn"
+val_00842.png,189,Lakeland terrier
+val_00843.png,792,shovel
+val_00844.png,471,cannon
+val_00845.png,49,"African crocodile, Nile crocodile, Crocodylus niloticus"
+val_00846.png,562,fountain
+val_00847.png,512,"corkscrew, bottle screw"
+val_00848.png,358,"polecat, fitch, foulmart, foumart, Mustela putorius"
+val_00849.png,322,"ringlet, ringlet butterfly"
+val_00850.png,239,Bernese mountain dog
+val_00851.png,891,waffle iron
+val_00852.png,745,projector
+val_00853.png,905,window shade
+val_00854.png,654,minibus
+val_00855.png,775,sarong
+val_00856.png,756,rain barrel
+val_00857.png,613,joystick
+val_00858.png,488,chain
+val_00859.png,822,steel drum
+val_00860.png,581,"grille, radiator grille"
+val_00861.png,508,"computer keyboard, keypad"
+val_00862.png,288,"leopard, Panthera pardus"
+val_00863.png,980,volcano
+val_00864.png,142,dowitcher
+val_00865.png,168,redbone
+val_00866.png,424,barbershop
+val_00867.png,577,"gong, tam-tam"
+val_00868.png,465,bulletproof vest
+val_00869.png,539,"doormat, welcome mat"
+val_00870.png,330,"wood rabbit, cottontail, cottontail rabbit"
+val_00871.png,572,goblet
+val_00872.png,204,"Lhasa, Lhasa apso"
+val_00873.png,866,tractor
+val_00874.png,548,entertainment center
+val_00875.png,554,fireboat
+val_00876.png,550,espresso maker
+val_00877.png,421,"bannister, banister, balustrade, balusters, handrail"
+val_00878.png,880,"unicycle, monocycle"
+val_00879.png,24,"great grey owl, great gray owl, Strix nebulosa"
+val_00880.png,84,peacock
+val_00881.png,424,barbershop
+val_00882.png,601,"hoopskirt, crinoline"
+val_00883.png,115,"sea slug, nudibranch"
+val_00884.png,64,green mamba
+val_00885.png,353,gazelle
+val_00886.png,281,"tabby, tabby cat"
+val_00887.png,851,"television, television system"
+val_00888.png,677,nail
+val_00889.png,481,cassette
+val_00890.png,790,shopping basket
+val_00891.png,354,"Arabian camel, dromedary, Camelus dromedarius"
+val_00892.png,850,"teddy, teddy bear"
+val_00893.png,681,"notebook, notebook computer"
+val_00894.png,960,"chocolate sauce, chocolate syrup"
+val_00895.png,745,projector
+val_00896.png,725,"pitcher, ewer"
+val_00897.png,773,"saltshaker, salt shaker"
+val_00898.png,503,cocktail shaker
+val_00899.png,513,"cornet, horn, trumpet, trump"
+val_00900.png,561,forklift
+val_00901.png,747,"punching bag, punch bag, punching ball, punchball"
+val_00902.png,49,"African crocodile, Nile crocodile, Crocodylus niloticus"
+val_00903.png,135,"limpkin, Aramus pictus"
+val_00904.png,433,"bathing cap, swimming cap"
+val_00905.png,512,"corkscrew, bottle screw"
+val_00906.png,188,wire-haired fox terrier
+val_00907.png,301,"ladybug, ladybeetle, lady beetle, ladybird, ladybird beetle"
+val_00908.png,568,fur coat
+val_00909.png,945,bell pepper
+val_00910.png,822,steel drum
+val_00911.png,180,"American Staffordshire terrier, Staffordshire terrier, American pit bull terrier, pit bull terrier"
+val_00912.png,653,milk can
+val_00913.png,791,shopping cart
+val_00914.png,494,"chime, bell, gong"
+val_00915.png,818,"spotlight, spot"
+val_00916.png,475,car mirror
+val_00917.png,805,soccer ball
+val_00918.png,243,bull mastiff
+val_00919.png,620,"laptop, laptop computer"
+val_00920.png,550,espresso maker
+val_00921.png,352,"impala, Aepyceros melampus"
+val_00922.png,311,"grasshopper, hopper"
+val_00923.png,415,"bakery, bakeshop, bakehouse"
+val_00924.png,790,shopping basket
+val_00925.png,289,"snow leopard, ounce, Panthera uncia"
+val_00926.png,33,"loggerhead, loggerhead turtle, Caretta caretta"
+val_00927.png,904,window screen
+val_00928.png,895,"warplane, military plane"
+val_00929.png,690,oxcart
+val_00930.png,593,"harmonica, mouth organ, harp, mouth harp"
+val_00931.png,322,"ringlet, ringlet butterfly"
+val_00932.png,755,"radio telescope, radio reflector"
+val_00933.png,945,bell pepper
+val_00934.png,585,hair spray
+val_00935.png,669,mosquito net
+val_00936.png,833,"submarine, pigboat, sub, U-boat"
+val_00937.png,908,wing
+val_00938.png,892,wall clock
+val_00939.png,669,mosquito net
+val_00940.png,848,tape player
+val_00941.png,851,"television, television system"
+val_00942.png,758,reel
+val_00943.png,865,toyshop
+val_00944.png,383,"Madagascar cat, ring-tailed lemur, Lemur catta"
+val_00945.png,94,hummingbird
+val_00946.png,626,"lighter, light, igniter, ignitor"
+val_00947.png,262,Brabancon griffon
+val_00948.png,205,flat-coated retriever
+val_00949.png,920,"traffic light, traffic signal, stoplight"
+val_00950.png,626,"lighter, light, igniter, ignitor"
+val_00951.png,948,Granny Smith
+val_00952.png,923,plate
+val_00953.png,128,"black stork, Ciconia nigra"
+val_00954.png,953,"pineapple, ananas"
+val_00955.png,953,"pineapple, ananas"
+val_00956.png,744,"projectile, missile"
+val_00957.png,626,"lighter, light, igniter, ignitor"
+val_00958.png,535,"disk brake, disc brake"
+val_00959.png,148,"killer whale, killer, orca, grampus, sea wolf, Orcinus orca"
+val_00960.png,999,"toilet tissue, toilet paper, bathroom tissue"
+val_00961.png,694,"paddlewheel, paddle wheel"
+val_00962.png,700,paper towel
+val_00963.png,810,space bar
+val_00964.png,24,"great grey owl, great gray owl, Strix nebulosa"
+val_00965.png,244,Tibetan mastiff
+val_00966.png,375,"colobus, colobus monkey"
+val_00967.png,169,"borzoi, Russian wolfhound"
+val_00968.png,388,"giant panda, panda, panda bear, coon bear, Ailuropoda melanoleuca"
+val_00969.png,295,"American black bear, black bear, Ursus americanus, Euarctos americanus"
+val_00970.png,904,window screen
+val_00971.png,992,agaric
+val_00972.png,465,bulletproof vest
+val_00973.png,229,"Old English sheepdog, bobtail"
+val_00974.png,583,guillotine
+val_00975.png,804,soap dispenser
+val_00976.png,428,"barrow, garden cart, lawn cart, wheelbarrow"
+val_00977.png,415,"bakery, bakeshop, bakehouse"
+val_00978.png,978,"seashore, coast, seacoast, sea-coast"
+val_00979.png,606,"iron, smoothing iron"
+val_00980.png,744,"projectile, missile"
+val_00981.png,60,"night snake, Hypsiglena torquata"
+val_00982.png,993,gyromitra
+val_00983.png,698,palace
+val_00984.png,163,"bloodhound, sleuthhound"
+val_00985.png,394,sturgeon
+val_00986.png,931,"bagel, beigel"
+val_00987.png,603,"horse cart, horse-cart"
+val_00988.png,994,"stinkhorn, carrion fungus"
+val_00989.png,564,four-poster
+val_00990.png,174,"Norwegian elkhound, elkhound"
+val_00991.png,839,suspension bridge
+val_00992.png,209,Chesapeake Bay retriever
+val_00993.png,159,Rhodesian ridgeback
+val_00994.png,362,badger
+val_00995.png,507,combination lock
+val_00996.png,167,English foxhound
+val_00997.png,148,"killer whale, killer, orca, grampus, sea wolf, Orcinus orca"
+val_00998.png,311,"grasshopper, hopper"
+val_00999.png,805,soccer ball

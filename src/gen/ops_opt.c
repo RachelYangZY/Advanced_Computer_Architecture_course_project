@@ -34,24 +34,43 @@ static uint64_t row_words[2][PATCH_MAX / 8];
 
 #ifdef USE_XREQUANT
 /*
- * xrequant, TFLite modes (see src/kernels/xrequant_ref.h): srdhm + rounding right shift + zp +
- * saturation in one instruction. mode 1 = half-up shift (FC, CONV), mode 2 = half-away (BMM).
- * A positive TFLite shift (left shift) is applied to the accumulator first, as TFLite does.
+ * xrequant rd, rs1, rs2 (see src/kernels/xrequant_ref.h): rs1 = accumulator, rs2 = packed
+ * {mode, TFLite shift, zero point, multiplier}; srdhm + rounding shift + zp + saturation in one
+ * instruction, rd write-only. mode 1 = half-up shift (FC, CONV), mode 2 = half-away (BMM).
+ * The packed operands are built once per op call (per output channel for FC/CONV, once for BMM),
+ * not once per output element.
  */
-static inline int32_t xrequant(int32_t acc, int32_t mult, int32_t shift, int32_t zp, int mode)
+static inline int32_t xrequant(int32_t acc, uint64_t rs2)
 {
-    int left = shift > 0 ? shift : 0;
-    int right = shift > 0 ? 0 : -shift;
-    acc = (int32_t)((uint32_t)acc << left);
-    int64_t r = (int64_t)(((uint64_t)mode << 16) | ((uint64_t)right << 8) | ((uint64_t)zp & 0xff));
-    __asm__(".insn r 0x0b, 1, 0x2b, %0, %1, %2" : "+r"(r) : "r"((int64_t)acc), "r"((int64_t)mult));
+    int64_t r;
+    __asm__(".insn r 0x0b, 1, 0x2b, %0, %1, %2" : "=r"(r) : "r"((int64_t)acc), "r"(rs2));
     return (int32_t)r;
 }
-#define RQ_UP(acc, mult, shift, zp, lo, hi) tfl_clamp_i8(xrequant((acc), (mult), (shift), (zp), 1), (lo), (hi))
-#define RQ_GEMM(acc, mult, shift, zp, lo, hi) tfl_clamp_i8(xrequant((acc), (mult), (shift), (zp), 2), (lo), (hi))
+
+static inline uint64_t rq_pack(int32_t mult, int32_t shift, int32_t zp, uint32_t mode)
+{
+    uint32_t ctrl = (mode << 16) | (((uint32_t)shift & 0xff) << 8) | ((uint32_t)zp & 0xff);
+    return ((uint64_t)ctrl << 32) | (uint32_t)mult;
+}
+
+static uint64_t rq_words[GEMM_MAX_N];
+
+static void rq_pack_channels(const int32_t *mult, const int32_t *shift, int32_t n, int32_t zp)
+{
+    for (int32_t c = 0; c < n; c++) rq_words[c] = rq_pack(mult[c], shift[c], zp, 1);
+}
+
+#define RQ_PREP_UP(mult, shift, n, zp) rq_pack_channels((mult), (shift), (n), (zp))
+#define RQ_UP(acc, c, mult, shift, zp, lo, hi) tfl_clamp_i8(xrequant((acc), rq_words[(c)]), (lo), (hi))
+#define RQ_PREP_BMM(p) const uint64_t rq_bmm = rq_pack((p)->mult, (p)->shift, (p)->zp_out, 2)
+#define RQ_GEMM(acc, p, lo, hi) tfl_clamp_i8(xrequant((acc), rq_bmm), (lo), (hi))
 #else
-#define RQ_UP(acc, mult, shift, zp, lo, hi) tfl_clamp_i8(tfl_mul_qm_up((acc), (mult), (shift)) + (zp), (lo), (hi))
-#define RQ_GEMM(acc, mult, shift, zp, lo, hi) tfl_clamp_i8(tfl_mul_qm((acc), (mult), (shift)) + (zp), (lo), (hi))
+#define RQ_PREP_UP(mult, shift, n, zp) ((void)0)
+#define RQ_UP(acc, c, mult, shift, zp, lo, hi) \
+    tfl_clamp_i8(tfl_mul_qm_up((acc), (mult)[(c)], (shift)[(c)]) + (zp), (lo), (hi))
+#define RQ_PREP_BMM(p) ((void)0)
+#define RQ_GEMM(acc, p, lo, hi) \
+    tfl_clamp_i8(tfl_mul_qm((acc), (p)->mult, (p)->shift) + (p)->zp_out, (lo), (hi))
 #endif
 
 void op_fc_i8(const fc_params_t *p, const int8_t *in, int8_t *out)
@@ -61,6 +80,7 @@ void op_fc_i8(const fc_params_t *p, const int8_t *in, int8_t *out)
         op_fc_i8_ref(p, in, out);
         return;
     }
+    RQ_PREP_UP(p->mult, p->shift, n, p->out_zp);
     for (int32_t r = 0; r < p->rows; r += 2) {
         const int8_t *x0 = in + (int64_t)r * k;
         const int8_t *x1 = r + 1 < p->rows ? x0 + k : 0;
@@ -69,7 +89,7 @@ void op_fc_i8(const fc_params_t *p, const int8_t *in, int8_t *out)
             int8_t *o = out + (int64_t)(r + rr) * n;
             const int32_t *acc = acc_buf[rr];
             for (int32_t c = 0; c < n; c++) {
-                o[c] = RQ_UP(acc[c] + p->bias_eff[c], p->mult[c], p->shift[c], p->out_zp,
+                o[c] = RQ_UP(acc[c] + p->bias_eff[c], c, p->mult, p->shift, p->out_zp,
                              p->act_min, p->act_max);
             }
         }
@@ -100,6 +120,7 @@ void op_bmm_i8(const bmm_params_t *p, const int8_t *a, const int8_t *b, int8_t *
     }
     int8_t *bt = (int8_t *)bt_words;
     const int32_t kzz = k * p->zp_a * p->zp_b;
+    RQ_PREP_BMM(p);
     for (int32_t bi = 0; bi < p->batch; bi++) {
         const int8_t *A = a + (int64_t)bi * m * k;
         const int8_t *B = b + (int64_t)bi * k * n;
@@ -132,7 +153,7 @@ void op_bmm_i8(const bmm_params_t *p, const int8_t *a, const int8_t *b, int8_t *
                 const int32_t row_term = kzz - p->zp_b * row_sum[rr];
                 for (int32_t j = 0; j < n; j++) {
                     int32_t v = acc[j] + row_term - p->zp_a * col_sum[j];
-                    o[j] = RQ_GEMM(v, p->mult, p->shift, p->zp_out, p->act_min, p->act_max);
+                    o[j] = RQ_GEMM(v, p, p->act_min, p->act_max);
                 }
             }
         }
@@ -166,6 +187,7 @@ void op_conv2d_i8(const conv_params_t *p, const int8_t *in, int8_t *out)
         return;
     }
     const int32_t npos = p->out_h * p->out_w;
+    RQ_PREP_UP(p->mult, p->shift, oc, p->out_zp);
     for (int32_t pos = 0; pos < npos; pos += 2) {
         int32_t nr = pos + 1 < npos ? 2 : 1;
         for (int32_t rr = 0; rr < nr; rr++) {
@@ -177,7 +199,7 @@ void op_conv2d_i8(const conv_params_t *p, const int8_t *in, int8_t *out)
             int8_t *o = out + (int64_t)(pos + rr) * oc;
             const int32_t *acc = acc_buf[rr];
             for (int32_t c = 0; c < oc; c++) {
-                o[c] = RQ_UP(acc[c] + p->bias_eff[c], p->mult[c], p->shift[c], p->out_zp,
+                o[c] = RQ_UP(acc[c] + p->bias_eff[c], c, p->mult, p->shift, p->out_zp,
                              p->act_min, p->act_max);
             }
         }

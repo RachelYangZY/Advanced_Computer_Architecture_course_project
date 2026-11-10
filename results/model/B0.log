@@ -33,7 +33,7 @@ PROF op=31 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=32 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=33 kind=BATCH_MATMUL macs=7451328 instret=118652909 cycles=118652909
 PROF op=34 kind=RESHAPE macs=0 instret=4 cycles=4
-PROF op=35 kind=SOFTMAX macs=0 instret=4661264 cycles=4661264
+PROF op=35 kind=SOFTMAX macs=0 instret=13562417 cycles=13562417
 PROF op=36 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=37 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=38 kind=BATCH_MATMUL macs=7451328 instret=114027355 cycles=114027355
@@ -85,7 +85,7 @@ PROF op=83 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=84 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=85 kind=BATCH_MATMUL macs=7451328 instret=118707411 cycles=118707411
 PROF op=86 kind=RESHAPE macs=0 instret=4 cycles=4
-PROF op=87 kind=SOFTMAX macs=0 instret=4662093 cycles=4662093
+PROF op=87 kind=SOFTMAX macs=0 instret=13405488 cycles=13405488
 PROF op=88 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=89 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=90 kind=BATCH_MATMUL macs=7451328 instret=114028727 cycles=114028727
@@ -137,7 +137,7 @@ PROF op=135 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=136 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=137 kind=BATCH_MATMUL macs=7451328 instret=118670215 cycles=118670215
 PROF op=138 kind=RESHAPE macs=0 instret=4 cycles=4
-PROF op=139 kind=SOFTMAX macs=0 instret=4661817 cycles=4661817
+PROF op=139 kind=SOFTMAX macs=0 instret=13489000 cycles=13489000
 PROF op=140 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=141 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=142 kind=BATCH_MATMUL macs=7451328 instret=114028772 cycles=114028772
@@ -189,7 +189,7 @@ PROF op=187 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=188 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=189 kind=BATCH_MATMUL macs=7451328 instret=118698477 cycles=118698477
 PROF op=190 kind=RESHAPE macs=0 instret=4 cycles=4
-PROF op=191 kind=SOFTMAX macs=0 instret=4661668 cycles=4661668
+PROF op=191 kind=SOFTMAX macs=0 instret=13618609 cycles=13618609
 PROF op=192 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=193 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=194 kind=BATCH_MATMUL macs=7451328 instret=114024946 cycles=114024946
@@ -241,7 +241,7 @@ PROF op=239 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=240 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=241 kind=BATCH_MATMUL macs=7451328 instret=118719672 cycles=118719672
 PROF op=242 kind=RESHAPE macs=0 instret=4 cycles=4
-PROF op=243 kind=SOFTMAX macs=0 instret=4662365 cycles=4662365
+PROF op=243 kind=SOFTMAX macs=0 instret=13630509 cycles=13630509
 PROF op=244 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=245 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=246 kind=BATCH_MATMUL macs=7451328 instret=114027259 cycles=114027259
@@ -293,7 +293,7 @@ PROF op=291 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=292 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=293 kind=BATCH_MATMUL macs=7451328 instret=118823136 cycles=118823136
 PROF op=294 kind=RESHAPE macs=0 instret=4 cycles=4
-PROF op=295 kind=SOFTMAX macs=0 instret=4663085 cycles=4663085
+PROF op=295 kind=SOFTMAX macs=0 instret=13543370 cycles=13543370
 PROF op=296 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=297 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=298 kind=BATCH_MATMUL macs=7451328 instret=114015263 cycles=114015263
@@ -345,7 +345,7 @@ PROF op=343 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=344 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=345 kind=BATCH_MATMUL macs=7451328 instret=118758421 cycles=118758421
 PROF op=346 kind=RESHAPE macs=0 instret=4 cycles=4
-PROF op=347 kind=SOFTMAX macs=0 instret=4663192 cycles=4663192
+PROF op=347 kind=SOFTMAX macs=0 instret=13574033 cycles=13574033
 PROF op=348 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=349 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=350 kind=BATCH_MATMUL macs=7451328 instret=114031486 cycles=114031486
@@ -397,7 +397,7 @@ PROF op=395 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=396 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=397 kind=BATCH_MATMUL macs=7451328 instret=118746273 cycles=118746273
 PROF op=398 kind=RESHAPE macs=0 instret=4 cycles=4
-PROF op=399 kind=SOFTMAX macs=0 instret=4663266 cycles=4663266
+PROF op=399 kind=SOFTMAX macs=0 instret=13611560 cycles=13611560
 PROF op=400 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=401 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=402 kind=BATCH_MATMUL macs=7451328 instret=114024051 cycles=114024051
@@ -449,7 +449,7 @@ PROF op=447 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=448 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=449 kind=BATCH_MATMUL macs=7451328 instret=118861752 cycles=118861752
 PROF op=450 kind=RESHAPE macs=0 instret=4 cycles=4
-PROF op=451 kind=SOFTMAX macs=0 instret=4663706 cycles=4663706
+PROF op=451 kind=SOFTMAX macs=0 instret=13511388 cycles=13511388
 PROF op=452 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=453 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=454 kind=BATCH_MATMUL macs=7451328 instret=114025910 cycles=114025910
@@ -501,7 +501,7 @@ PROF op=499 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=500 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=501 kind=BATCH_MATMUL macs=7451328 instret=118906999 cycles=118906999
 PROF op=502 kind=RESHAPE macs=0 instret=4 cycles=4
-PROF op=503 kind=SOFTMAX macs=0 instret=4664165 cycles=4664165
+PROF op=503 kind=SOFTMAX macs=0 instret=13443479 cycles=13443479
 PROF op=504 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=505 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=506 kind=BATCH_MATMUL macs=7451328 instret=114027300 cycles=114027300
@@ -553,7 +553,7 @@ PROF op=551 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=552 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=553 kind=BATCH_MATMUL macs=7451328 instret=118964726 cycles=118964726
 PROF op=554 kind=RESHAPE macs=0 instret=4 cycles=4
-PROF op=555 kind=SOFTMAX macs=0 instret=4664102 cycles=4664102
+PROF op=555 kind=SOFTMAX macs=0 instret=13367881 cycles=13367881
 PROF op=556 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=557 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=558 kind=BATCH_MATMUL macs=7451328 instret=114012585 cycles=114012585
@@ -605,7 +605,7 @@ PROF op=603 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=604 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=605 kind=BATCH_MATMUL macs=7451328 instret=118951470 cycles=118951470
 PROF op=606 kind=RESHAPE macs=0 instret=4 cycles=4
-PROF op=607 kind=SOFTMAX macs=0 instret=4663134 cycles=4663134
+PROF op=607 kind=SOFTMAX macs=0 instret=13641430 cycles=13641430
 PROF op=608 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=609 kind=RESHAPE macs=0 instret=4 cycles=4
 PROF op=610 kind=BATCH_MATMUL macs=7451328 instret=114023684 cycles=114023684
@@ -646,7 +646,7 @@ PROF op=644 kind=MUL macs=0 instret=3011161 cycles=3011161
 PROF op=645 kind=ADD macs=0 instret=5663534 cycles=5663534
 PROF op=646 kind=SLICE macs=0 instret=4729 cycles=4729
 PROF op=647 kind=FULLY_CONNECTED macs=192000 instret=1593466 cycles=1593466
-TOTAL instret=12598660515 cycles=12598660515
+TOTAL instret=12705105822 cycles=12705105822
 CHECK t776 n=1000 mismatches=0 max_diff=0 top1=960 golden_top1=960
 RESULT PASS
 exit=0

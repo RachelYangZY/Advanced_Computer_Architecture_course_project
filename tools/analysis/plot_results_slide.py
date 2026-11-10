@@ -89,9 +89,9 @@ def main() -> None:
         ax.spines[s].set_visible(False)
 
     # scorecard
-    cards = [("11.0x", "matrix kernel (gemm_nt_rows)", "B1 5.39 G -> X1 0.49 G instr.", "target > 2x"),
-             ("8.28x", "end to end vs baseline B0", "4.26x vs optimized software B1", "target > 1.5x"),
-             ("1000 / 1000", "output scores identical to TFLite", "bit-exact for B0, B1, X1", "correctness")]
+    cards = [("11.0x", "matrix kernel (gemm_nt_rows)", "B1 5.39 G -> X1 0.49 G instructions", "met: >=2x instr. target"),
+             ("8.28x", "fewer instructions, whole model", "4.26x vs optimized software B1", "instructions, not cycles"),
+             ("1000 / 1000", "output scores identical to TFLite", "bit-exact for B0, B1, X1", "met: functional match")]
     for i, (big, l1, l2, tag) in enumerate(cards):
         x = 0.04 + i * 0.32
         fig.patches.append(FancyBboxPatch((x, 0.07), 0.30, 0.17, boxstyle="round,pad=0.003,rounding_size=0.012",
@@ -99,7 +99,8 @@ def main() -> None:
         fig.text(x + 0.015, 0.175, big, fontsize=28, fontweight="bold", color=GREEN)
         fig.text(x + 0.015, 0.135, l1, fontsize=13, fontweight="bold")
         fig.text(x + 0.015, 0.105, l2, fontsize=11, color="#444")
-        fig.text(x + 0.285, 0.215, "met: " + tag, fontsize=10, color=GREEN, ha="right", fontweight="bold")
+        fig.text(x + 0.285, 0.215, tag, fontsize=10, color=GREEN if tag.startswith("met") else "#666", ha="right",
+                 fontweight="bold")
 
     fig.text(0.04, 0.025,
              "Instruction counts, not cycles: Spike retires one instruction per cycle, so real speedup needs the "

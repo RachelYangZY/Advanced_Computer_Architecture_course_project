@@ -200,8 +200,83 @@ void op_bmm_i8_ref(const bmm_params_t *p, const int8_t *a, const int8_t *b, int8
     }
 }
 
-void op_softmax_i8(const softmax_params_t *p, const int8_t *in, int8_t *out)
+/* ---- integer-only float32 emulation for non-negative values (used by softmax) ----
+ * A value is m * 2^e. sf_round() rounds an exact m * 2^e to the nearest float32 (ties to even,
+ * including denormals), so every operation below equals the IEEE single-precision result. */
+typedef struct { uint64_t m; int32_t e; } sf_t;
+
+static int sf_bitlen(uint64_t m)
 {
+    int n = 0;
+    if (m >> 32) { n += 32; m >>= 32; }
+    if (m >> 16) { n += 16; m >>= 16; }
+    if (m >> 8) { n += 8; m >>= 8; }
+    if (m >> 4) { n += 4; m >>= 4; }
+    if (m >> 2) { n += 2; m >>= 2; }
+    if (m >> 1) { n += 1; m >>= 1; }
+    return n + (int)m;
+}
+
+static sf_t sf_from_bits(uint32_t u)
+{
+    uint32_t ex = (u >> 23) & 0xff, fr = u & 0x7fffff;
+    sf_t r;
+    if (ex == 0) { r.m = fr; r.e = -149; }
+    else { r.m = fr | (1u << 23); r.e = (int32_t)ex - 150; }
+    return r;
+}
+
+static sf_t sf_round(uint64_t m, int32_t e)
+{
+    sf_t z = {0, 0};
+    if (m == 0) return z;
+    int nb = sf_bitlen(m);
+    int32_t lsb = e + (nb > 24 ? nb - 24 : 0);
+    if (lsb < -149) lsb = -149;
+    int32_t sh = lsb - e;
+    sf_t r;
+    r.e = lsb;
+    if (sh <= 0) { r.m = m << (-sh); return r; }
+    if (sh > 64) return z;
+    uint64_t q, rem, half;
+    if (sh == 64) { q = 0; rem = m; half = 1ULL << 63; }
+    else { q = m >> sh; rem = m & ((1ULL << sh) - 1); half = 1ULL << (sh - 1); }
+    if (rem > half || (rem == half && (q & 1))) q++;
+    r.m = q;
+    return r;
+}
+
+static sf_t sf_add(sf_t a, sf_t b)   /* float32 a + b, a and b >= 0 */
+{
+    if (a.m == 0) return b;
+    if (b.m == 0) return a;
+    int ta = a.e + sf_bitlen(a.m), tb = b.e + sf_bitlen(b.m);
+    if (ta - tb > 30) return a;   /* b is below half an ulp of a */
+    if (tb - ta > 30) return b;
+    int32_t e = a.e < b.e ? a.e : b.e;
+    return sf_round((a.m << (a.e - e)) + (b.m << (b.e - e)), e);
+}
+
+static sf_t sf_mul(sf_t a, sf_t b)
+{
+    sf_t z = {0, 0};
+    if (a.m == 0 || b.m == 0) return z;
+    return sf_round(a.m * b.m, a.e + b.e);
+}
+
+static sf_t sf_recip(sf_t x)   /* 1.0f / x, x > 0 */
+{
+    uint64_t n = 1ULL << 60;
+    uint64_t q = n / x.m;
+    if (n % x.m) q |= 1;       /* sticky bit: q has far more than 24 significant bits */
+    return sf_round(q, -x.e - 60);
+}
+
+/* Straightforward emulation, one generic float32 operation at a time (slow). Kept as the oracle
+ * for op_softmax_i8 below; tools/eval/softmax_selftest.c checks that both agree bit for bit. */
+void op_softmax_i8_slow(const softmax_params_t *p, const int8_t *in, int8_t *out)
+{
+    const sf_t scale = sf_from_bits(p->out_scale_bits);
     for (int32_t r = 0; r < p->rows; r++) {
         const int8_t *x = in + (int64_t)r * p->cols;
         int8_t *y = out + (int64_t)r * p->cols;
@@ -209,13 +284,92 @@ void op_softmax_i8(const softmax_params_t *p, const int8_t *in, int8_t *out)
         for (int32_t j = 0; j < p->cols; j++) {
             if (x[j] > mx) mx = x[j];
         }
-        uint64_t sum = 0;
+        sf_t sum = {0, 0};   /* sequential float32 sum, as TFLite */
         for (int32_t j = 0; j < p->cols; j++) {
-            sum += p->exp_tab[mx - x[j]];
+            sum = sf_add(sum, sf_from_bits(p->exp_f32[mx - x[j]]));
         }
+        const sf_t inv = sf_recip(sf_mul(sum, scale));
         for (int32_t j = 0; j < p->cols; j++) {
-            uint64_t num = (uint64_t)p->exp_tab[mx - x[j]] * (uint64_t)p->out_mul;
-            int32_t q = (int32_t)((2 * num + sum) / (2 * sum));   /* round half up */
+            sf_t s = sf_mul(sf_from_bits(p->exp_f32[mx - x[j]]), inv);   /* float32 p */
+            int32_t q;                       /* floor(p + 0.5), exact */
+            if (s.e >= 0) q = s.e > 20 ? 1 << 20 : (int32_t)(s.m << s.e);
+            else q = -s.e >= 64 ? 0 : (int32_t)((s.m + (1ULL << (-s.e - 1))) >> -s.e);
+            if (q > 1000) q = 1000;
+            y[j] = tfl_clamp_i8(q + p->zp_out, -128, 127);
+        }
+    }
+}
+
+/*
+ * Fast bit-exact softmax. Same float32 semantics as op_softmax_i8_slow, specialised:
+ *  - table entries are normal float32 (or zero; the generator rejects denormals), so a value is a
+ *    24-bit mantissa in [2^23, 2^24) and an exponent; no normalisation loops are needed;
+ *  - sum: sequential float32 add of non-negative values, rounded to nearest even each step;
+ *  - e*inv: the 48-bit product is rounded to 24 bits (float32 p); the quantized value is
+ *    floor(p + 0.5) computed exactly. TFLite does NOT round p + 0.5 to float32 first: with
+ *    p = 0.5 - 2^-25 a float32 add gives 1.0 (quantized 1) but TFLite returns 0; measured on 6
+ *    validation images, the exact form has 0 mismatches and the float32 add 6.
+ */
+void op_softmax_i8(const softmax_params_t *p, const int8_t *in, int8_t *out)
+{
+    const sf_t scale = sf_from_bits(p->out_scale_bits);
+    for (int32_t r = 0; r < p->rows; r++) {
+        const int8_t *x = in + (int64_t)r * p->cols;
+        int8_t *y = out + (int64_t)r * p->cols;
+        int32_t mx = -128;
+        for (int32_t j = 0; j < p->cols; j++) {
+            if (x[j] > mx) mx = x[j];
+        }
+
+        uint64_t S = 0;   /* running sum = S * 2^E, S in [2^23, 2^24) once non-zero */
+        int32_t E = 0;
+        for (int32_t j = 0; j < p->cols; j++) {
+            uint32_t u = p->exp_f32[mx - x[j]];
+            if (u == 0) continue;
+            uint64_t vm = (u & 0x7fffffu) | 0x800000u;
+            int32_t ve = (int32_t)(u >> 23) - 150;
+            if (S == 0) { S = vm; E = ve; continue; }
+            int32_t ta = E + 24, tb = ve + 24;
+            if (ta - tb > 30) continue;                      /* v below half an ulp of the sum */
+            if (tb - ta > 30) { S = vm; E = ve; continue; }  /* the sum is below half an ulp of v */
+            int32_t emin = E < ve ? E : ve;
+            uint64_t T = (S << (E - emin)) + (vm << (ve - emin));
+            int32_t tt = (ta > tb ? ta : tb) - emin;         /* bit count of the larger term */
+            int32_t sh = tt - 24 + (T >> tt ? 1 : 0);
+            if (sh > 0) {
+                uint64_t q = T >> sh, rem = T & ((1ULL << sh) - 1), half = 1ULL << (sh - 1);
+                if (rem > half || (rem == half && (q & 1))) q++;
+                T = q;
+            }
+            S = T;
+            E = emin + sh;
+            if (S >> 24) { S >>= 1; E++; }
+        }
+
+        sf_t sum = {S, E};
+        sf_t inv = sf_recip(sf_mul(sum, scale));
+        if (inv.m >> 24) { inv.m >>= 1; inv.e++; }
+
+        for (int32_t j = 0; j < p->cols; j++) {
+            uint32_t u = p->exp_f32[mx - x[j]];
+            int32_t q = 0;
+            if (u) {
+                uint64_t M = (uint64_t)((u & 0x7fffffu) | 0x800000u) * inv.m;   /* [2^46, 2^48) */
+                int32_t ep = (int32_t)(u >> 23) - 150 + inv.e;
+                int32_t sh = 23 + (int32_t)(M >> 47);
+                uint64_t P = M >> sh, rem = M & ((1ULL << sh) - 1), half = 1ULL << (sh - 1);
+                if (rem > half || (rem == half && (P & 1))) P++;
+                ep += sh;                                    /* p = P * 2^ep */
+                int32_t k = ep + 25;
+                if (k > 36) q = 1000;
+                else {
+                    uint64_t X = k >= 0 ? (P << k) : (-k >= 64 ? 0 : (P >> -k));
+                    q = (int32_t)((X + (1ULL << 24)) >> 25);
+                    if (q > 1000) q = 1000;
+                }
+            } else {
+                q = 0;
+            }
             y[j] = tfl_clamp_i8(q + p->zp_out, -128, 127);
         }
     }

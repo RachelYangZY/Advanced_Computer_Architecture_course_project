@@ -15,6 +15,7 @@
 #include "htif_print.h"
 #include "tflite_math.h"
 #include "xqmac8.h"
+#include "xrequant_encoding.h"
 #include "xrequant_ref.h"
 
 #ifndef ISA_VERIFY_SEED
@@ -34,52 +35,54 @@ static uint64_t rnd(void)   /* xorshift64* */
     return rng_state * 0x2545f4914f6cdd1dULL;
 }
 
-static inline int64_t hw_xqmac8(int64_t acc, uint64_t a, uint64_t b)
+/* Both instructions have two sources and a write-only rd. */
+static inline int64_t hw_xqmac8(uint64_t a, uint64_t b)
 {
-    __asm__(".insn r 0x0b, 0, 0x2b, %0, %1, %2" : "+r"(acc) : "r"(a), "r"(b));
-    return acc;
+    int64_t d;
+    __asm__(".insn r 0x0b, 0, 0x2b, %0, %1, %2" : "=r"(d) : "r"(a), "r"(b));
+    return d;
 }
 
-static inline int8_t hw_xrequant(int32_t acc, int32_t mult, uint32_t ctrl)
+static inline int8_t hw_xrequant(int32_t acc, uint64_t rs2)
 {
-    int64_t r = ctrl;
-    __asm__(".insn r 0x0b, 1, 0x2b, %0, %1, %2" : "+r"(r) : "r"((int64_t)acc), "r"((int64_t)mult));
+    int64_t r;
+    __asm__(".insn r 0x0b, 1, 0x2b, %0, %1, %2" : "=r"(r) : "r"((int64_t)acc), "r"(rs2));
     return (int8_t)r;
 }
 
 static uint64_t n_tests, n_fail;
 
-static void fail_xqmac(int64_t acc, uint64_t a, uint64_t b, int64_t got, int64_t want)
+static void fail_xqmac(uint64_t a, uint64_t b, int64_t got, int64_t want)
 {
     n_fail++;
     if (n_fail <= 10) {
-        put_s("FAIL xqmac8 acc="); put_x((uint64_t)acc); put_s(" a="); put_x(a);
+        put_s("FAIL xqmac8 a="); put_x(a);
         put_s(" b="); put_x(b); put_s(" got="); put_i(got); put_s(" want="); put_i(want);
         flush_line();
     }
 }
 
-static void check_xqmac(int64_t acc, uint64_t a, uint64_t b)
+static void check_xqmac(uint64_t a, uint64_t b)
 {
     n_tests++;
-    int64_t got = hw_xqmac8(acc, a, b), want = xqmac8_reference(acc, a, b);
-    if (got != want) fail_xqmac(acc, a, b, got, want);
+    int64_t got = hw_xqmac8(a, b), want = xqmac8_reference(a, b);
+    if (got != want) fail_xqmac(a, b, got, want);
 }
 
 static void check_xrequant(int32_t acc, int32_t mult, int s, int zp, int mode)
 {
-    uint32_t ctrl = ((uint32_t)mode << 16) | ((uint32_t)s << 8) | ((uint32_t)zp & 0xff);
+    /* s: TFLite signed shift for modes 1/2 (positive = left shift of the accumulator),
+     * unsigned right shift for legacy mode 0. */
+    uint64_t rs2 = xrequant_pack(mult, s, zp, mode);
     n_tests++;
-    int8_t got = hw_xrequant(acc, mult, ctrl);
-    int8_t want = xrequant_reference(acc, mult, ctrl);
+    int8_t got = hw_xrequant(acc, rs2);
+    int8_t want = xrequant_reference(acc, rs2);
     int8_t tfl = want;
     int have_tfl = 0;
     if (mode == 1 || mode == 2) {
-        /* independent TFLite arithmetic: srdhm, then right shift with the mode's rounding */
-        int32_t v = tfl_srdhm(acc, mult);
-        int64_t t = mode == 1 ? (s ? (((int64_t)v + (1LL << (s - 1))) >> s) : v)
-                              : (int64_t)tfl_rdivpot(v, s);
-        t += zp;
+        /* independent TFLite arithmetic (tflite_math.h), including left shifts */
+        int32_t q = mode == 1 ? tfl_mul_qm_up(acc, mult, s) : tfl_mul_qm(acc, mult, s);
+        int64_t t = (int64_t)q + zp;
         tfl = (int8_t)(t > 127 ? 127 : (t < -128 ? -128 : t));
         have_tfl = 1;
     }
@@ -122,29 +125,24 @@ int main(void)
         0x0000000000000000ULL, 0x8080808080808080ULL, 0x7f7f7f7f7f7f7f7fULL, 0x0101010101010101ULL,
         0xffffffffffffffffULL, 0x80007f00ff0180ffULL, 0x0123456789abcdefULL, 0x7f80807f7f80807fULL,
     };
-    static const int64_t accs[] = {
-        0, 1, -1, INT32_MAX, INT32_MIN, INT64_MAX, INT64_MIN, INT64_MAX - 100000, INT64_MIN + 100000,
-    };
     for (unsigned i = 0; i < sizeof pat / sizeof pat[0]; i++)
         for (unsigned j = 0; j < sizeof pat / sizeof pat[0]; j++)
-            for (unsigned k = 0; k < sizeof accs / sizeof accs[0]; k++)
-                check_xqmac(accs[k], pat[i], pat[j]);
+            check_xqmac(pat[i], pat[j]);
     for (int lane = 0; lane < 8; lane++)   /* one nonzero lane at a time: checks lane order */
         for (int va = -128; va <= 127; va += 51)
             for (int vb = -128; vb <= 127; vb += 51)
-                check_xqmac(0, (uint64_t)(uint8_t)va << (8 * lane), (uint64_t)(uint8_t)vb << (8 * lane));
+                check_xqmac((uint64_t)(uint8_t)va << (8 * lane), (uint64_t)(uint8_t)vb << (8 * lane));
     uint64_t directed_xq = n_tests;
 
     /* ---- xqmac8: random ---- */
     for (int i = 0; i < ISA_VERIFY_N; i++) {
         uint64_t a = rnd(), b = rnd();
-        int64_t acc = (rnd() & 1) ? (int64_t)rnd() : (int32_t)rnd();
-        check_xqmac(acc, a, b);
+        check_xqmac(a, b);
     }
     uint64_t random_xq = n_tests - directed_xq;
 
-    /* ---- xrequant: directed (edges x edges x shifts x modes) ---- */
-    static const int shifts[] = { 0, 1, 2, 7, 8, 15, 16, 30, 31 };
+    /* ---- xrequant: directed (edges x edges x shifts x modes); negative = right shift ---- */
+    static const int shifts[] = { 0, -1, -2, -7, -8, -15, -16, -30, -31, 1, 2, 5, 15, 31 };
     static const int zps[] = { 0, 1, -1, 127, -128, 55, -73 };
     uint64_t before = n_tests;
     for (int m = 1; m <= 2; m++)
@@ -165,7 +163,7 @@ int main(void)
     for (int i = 0; i < ISA_VERIFY_N; i++) {
         uint64_t r = rnd();
         int mode = (int)(r % 3);
-        int s = (int)((r >> 8) % (mode == 0 ? 64 : 32));
+        int s = mode == 0 ? (int)((r >> 8) % 64) : (int)((r >> 8) % 63) - 31;
         int zp = (int)(int8_t)(r >> 16);
         int32_t acc = rand32();
         int32_t mult = (r >> 24 & 3) == 0 ? (int32_t)(1u << (30 - (int)((r >> 28) % 8))) : rand32();
